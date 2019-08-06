@@ -35,7 +35,7 @@ def create_batches_rnd(batch_size,data_folder,wav_lst,N_snt,wlen,lab_dict,fact_a
         #[fs,signal]=scipy.io.wavfile.read(data_folder+wav_lst[snt_id_arr[i]])
         #signal=signal.astype(float)/32768
         fname = wav_lst[snt_id_arr[i]]#data_folder+wav_lst[snt_id_arr[i]]
-        [signal, fs] = sf.read(io.BytesIO(tf.read_file(fname)))
+        [signal, fs] = sf.read(io.BytesIO(tf.read_file(fname).numpy()))
         # accesing to a random chunk
         snt_len=signal.shape[0]
         snt_beg=np.random.randint(snt_len-wlen-1) #randint(0, snt_len-2*wlen-1)

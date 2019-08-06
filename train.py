@@ -1,8 +1,9 @@
-import os
+import os, io
 #import scipy.io.wavfile
 # python test.py --cfg=cfg/SincNet_TIMIT.cfg
 import soundfile as sf
 
+import tensorflow as tf
 from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping, CSVLogger
 from keras.callbacks import Callback
 import sys
@@ -33,7 +34,8 @@ def create_batches_rnd(batch_size,data_folder,wav_lst,N_snt,wlen,lab_dict,fact_a
         # select a random sentence from the list 
         #[fs,signal]=scipy.io.wavfile.read(data_folder+wav_lst[snt_id_arr[i]])
         #signal=signal.astype(float)/32768
-        [signal, fs] = sf.read(data_folder+wav_lst[snt_id_arr[i]])
+        fname = data_folder+wav_lst[snt_id_arr[i]]
+        [signal, fs] = sf.read(io.BytesIO(tf.read_file(fname)))
         # accesing to a random chunk
         snt_len=signal.shape[0]
         snt_beg=np.random.randint(snt_len-wlen-1) #randint(0, snt_len-2*wlen-1)

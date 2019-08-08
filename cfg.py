@@ -98,7 +98,7 @@ class SincNetCfg:
         self.Batch_dev = 128
 
         # Loading label dictionary
-        self.lab_dict = np.load(self.class_dict_file, allow_pickle=True).item()
+        self.lab_dict = np.load(self.lab_dict, allow_pickle=True).item()
 
         # Initialization of the minibatch (batch_size,[0=>x_t,1=>x_t+N,1=>random_samp])
         self.sig_batch = np.zeros([self.batch_size, self.wlen])

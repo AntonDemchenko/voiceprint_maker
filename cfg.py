@@ -1,4 +1,5 @@
 import configparser
+import numpy as np
 
 
 class SincNetConfigParser(configparser.ConfigParser):
@@ -83,9 +84,26 @@ class SincNetCfg:
 
         # training list
         self.train_list = self._read_list_file(self.tr_lst)
+        self.snt_tr = len(self.train_list)
 
         # test list
         self.test_list = self._read_list_file(self.te_lst)
+        self.snt_te = len(self.test_list)
+
+        # Converting context and shift in samples
+        self.wlen = int(self.fs * self.cw_len / 1000.00)
+        self.wshift = int(self.fs * self.cw_shift / 1000.00)
+
+        # Batch_dev
+        self.Batch_dev = 128
+
+        # Loading label dictionary
+        self.lab_dict = np.load(self.class_dict_file, allow_pickle=True).item()
+
+        # Initialization of the minibatch (batch_size,[0=>x_t,1=>x_t+N,1=>random_samp])
+        self.sig_batch = np.zeros([self.batch_size, self.wlen])
+        self.lab_batch = np.zeros(self.batch_size)
+        self.out_dim = self.class_lay[0]
 
     def _str_to_bool(self, s):
         if s == 'True':

@@ -1,146 +1,106 @@
-import configparser as ConfigParser
+import configparser
 
 
-def read_cfg(cfg_file):
-    if cfg_file is None:
-        raise ValueError
+class SincNetConfigParser(configparser.ConfigParser):
+    def getintlist(self, section, option):
+        return list(map(int, self.getlist(section, option)))
 
-    config = ConfigParser.ConfigParser()
-    config.read(cfg_file)
+    def getbooleanlist(self, section, option):
+        return list(map(self._str_to_bool, self.getlist(section, option)))
 
-    options = {}
+    def getfloatlist(self, section, option):
+        return list(map(float, self.getlist(section, option)))
 
-    # [data]
-    options.tr_lst = config.get('data', 'tr_lst')
-    options.te_lst = config.get('data', 'te_lst')
-    options.lab_dict = config.get('data', 'lab_dict')
-    options.data_folder = config.get('data', 'data_folder')
-    options.output_folder = config.get('data', 'output_folder')
-    options.pt_file = config.get('data', 'pt_file')
+    def getlist(self, section, option):
+        value = self.get(section, option)
+        return value.split(',')
 
-    # [windowing]
-    options.fs = config.get('windowing', 'fs')
-    options.cw_len = config.get('windowing', 'cw_len')
-    options.cw_shift = config.get('windowing', 'cw_shift')
+    def _str_to_bool(self, s):
+        if s == 'True':
+            return True
+        elif s == 'False':
+            return False
+        else:
+            raise ValueError
 
-    # [cnn]
-    options.cnn_N_filt = config.get('cnn', 'cnn_N_filt')
-    options.cnn_len_filt = config.get('cnn', 'cnn_len_filt')
-    options.cnn_max_pool_len = config.get('cnn', 'cnn_max_pool_len')
-    options.cnn_use_laynorm_inp = config.get('cnn', 'cnn_use_laynorm_inp')
-    options.cnn_use_batchnorm_inp = config.get('cnn', 'cnn_use_batchnorm_inp')
-    options.cnn_use_laynorm = config.get('cnn', 'cnn_use_laynorm')
-    options.cnn_use_batchnorm = config.get('cnn', 'cnn_use_batchnorm')
-    options.cnn_act = config.get('cnn', 'cnn_act')
-    options.cnn_drop = config.get('cnn', 'cnn_drop')
+class SincNetCfg:
+    def __init__(self, cfg_file):
+        if cfg_file is None:
+            raise ValueError
 
-    # [dnn]
-    options.fc_lay = config.get('dnn', 'fc_lay')
-    options.fc_drop = config.get('dnn', 'fc_drop')
-    options.fc_use_laynorm_inp = config.get('dnn', 'fc_use_laynorm_inp')
-    options.fc_use_batchnorm_inp = config.get('dnn', 'fc_use_batchnorm_inp')
-    options.fc_use_batchnorm = config.get('dnn', 'fc_use_batchnorm')
-    options.fc_use_laynorm = config.get('dnn', 'fc_use_laynorm')
-    options.fc_act = config.get('dnn', 'fc_act')
+        config = SincNetConfigParser()
+        config.read(cfg_file)
 
-    # [class]
-    options.class_lay = config.get('class', 'class_lay')
-    options.class_drop = config.get('class', 'class_drop')
-    options.class_use_laynorm_inp = config.get('class', 'class_use_laynorm_inp')
-    options.class_use_batchnorm_inp = config.get('class', 'class_use_batchnorm_inp')
-    options.class_use_batchnorm = config.get('class', 'class_use_batchnorm')
-    options.class_use_laynorm = config.get('class', 'class_use_laynorm')
-    options.class_act = config.get('class', 'class_act')
-
-    # [optimization]
-    options.lr = config.get('optimization', 'lr')
-    options.batch_size = config.get('optimization', 'batch_size')
-    options.N_epochs = config.get('optimization', 'N_epochs')
-    options.N_batches = config.get('optimization', 'N_batches')
-    options.N_eval_epoch = config.get('optimization', 'N_eval_epoch')
-    options.seed = config.get('optimization', 'seed')
-
-    return parse_options(options)
-
-
-def parse_options(options):
-    assert options is not None
-
-    return {
         # [data]
-        'tr_lst': options.tr_lst,
-        'te_lst': options.te_lst,
-        'pt_file': options.pt_file,
-        'class_dict_file': options.lab_dict,
-        'data_folder': options.data_folder+'/',
-        'output_folder': options.output_folder,
+        self.tr_lst = config.get('data', 'tr_lst')
+        self.te_lst = config.get('data', 'te_lst')
+        self.lab_dict = config.get('data', 'lab_dict')
+        self.data_folder = config.get('data', 'data_folder') + '/'
+        self.output_folder = config.get('data', 'output_folder')
+        self.pt_file = config.get('data', 'pt_file')
 
         # [windowing]
-        'fs': int(options.fs),
-        'cw_len': int(options.cw_len),
-        'cw_shift': int(options.cw_shift),
+        self.fs = config.getint('windowing', 'fs')
+        self.cw_len = config.getint('windowing', 'cw_len')
+        self.cw_shift = config.getint('windowing', 'cw_shift')
 
         # [cnn]
-        'cnn_N_filt': list(map(int, options.cnn_N_filt.split(','))),
-        'cnn_len_filt': list(map(int, options.cnn_len_filt.split(','))),
-        'cnn_max_pool_len': list(map(int, options.cnn_max_pool_len.split(','))),
-        'cnn_use_laynorm_inp': str_to_bool(options.cnn_use_laynorm_inp),
-        'cnn_use_batchnorm_inp': str_to_bool(options.cnn_use_batchnorm_inp),
-        'cnn_use_laynorm': list(map(str_to_bool, options.cnn_use_laynorm.split(','))),
-        'cnn_use_batchnorm': list(map(str_to_bool, options.cnn_use_batchnorm.split(','))),
-        'cnn_act': list(map(str, options.cnn_act.split(','))),
-        'cnn_drop': list(map(float, options.cnn_drop.split(','))),
+        self.cnn_N_filt = config.getintlist('cnn', 'cnn_N_filt')
+        self.cnn_len_filt = config.getintlist('cnn', 'cnn_len_filt')
+        self.cnn_max_pool_len = config.getintlist('cnn', 'cnn_max_pool_len')
+        self.cnn_use_laynorm_inp = config.getboolean('cnn', 'cnn_use_laynorm_inp')
+        self.cnn_use_batchnorm_inp = config.getboolean('cnn', 'cnn_use_batchnorm_inp')
+        self.cnn_use_laynorm = config.getbooleanlist('cnn', 'cnn_use_laynorm')
+        self.cnn_use_batchnorm = config.getbooleanlist('cnn', 'cnn_use_batchnorm')
+        self.cnn_act = config.getlist('cnn', 'cnn_act')
+        self.cnn_drop = config.getfloatlist('cnn', 'cnn_drop')
 
         # [dnn]
-        'fc_lay': list(map(int, options.fc_lay.split(','))),
-        'fc_drop': list(map(float, options.fc_drop.split(','))),
-        'fc_use_laynorm_inp': str_to_bool(options.fc_use_laynorm_inp),
-        'fc_use_batchnorm_inp': str_to_bool(options.fc_use_batchnorm_inp),
-        'fc_use_batchnorm': list(map(str_to_bool, options.fc_use_batchnorm.split(','))),
-        'fc_use_laynorm': list(map(str_to_bool, options.fc_use_laynorm.split(','))),
-        'fc_act ': list(map(str, options.fc_act.split(','))),
+        self.fc_lay = config.getintlist('dnn', 'fc_lay')
+        self.fc_drop = config.getfloatlist('dnn', 'fc_drop')
+        self.fc_use_laynorm_inp = config.getboolean('dnn', 'fc_use_laynorm_inp')
+        self.fc_use_batchnorm_inp = config.getboolean('dnn', 'fc_use_batchnorm_inp')
+        self.fc_use_batchnorm = [self._str_to_bool(e) for e in config.get('dnn', 'fc_use_batchnorm').split(',')]
+        self.fc_use_laynorm = [self._str_to_bool(e) for e in config.get('dnn', 'fc_use_laynorm').split(',')]
+        self.fc_act = [e for e in config.get('dnn', 'fc_act').split(',')]
 
         # [class]
-        'class_lay': list(map(int, options.class_lay.split(','))),
-        'class_drop': list(map(float, options.class_drop.split(','))),
-        'class_use_laynorm_inp': str_to_bool(options.class_use_laynorm_inp),
-        'class_use_batchnorm_inp': str_to_bool(options.class_use_batchnorm_inp),
-        'class_use_batchnorm': list(map(str_to_bool, options.class_use_batchnorm.split(','))),
-        'class_use_laynorm': list(map(str_to_bool, options.class_use_laynorm.split(','))),
-        'class_act': list(map(str, options.class_act.split(','))),
+        self.class_lay = config.getintlist('class', 'class_lay')
+        self.class_drop = config.getfloatlist('class', 'class_drop')
+        self.class_use_laynorm_inp = config.getboolean('class', 'class_use_laynorm_inp')
+        self.class_use_batchnorm_inp = config.getboolean('class', 'class_use_batchnorm_inp')
+        self.class_use_batchnorm = config.getbooleanlist('class', 'class_use_batchnorm')
+        self.class_use_laynorm = config.getbooleanlist('class', 'class_use_laynorm')
+        self.class_act = config.getlist('class', 'class_act')
 
         # [optimization]
-        'lr': float(options.lr),
-        'batch_size': int(options.batch_size),
-        'N_epochs': int(options.N_epochs),
-        'N_batches': int(options.N_batches),
-        'N_eval_epoch': int(options.N_eval_epoch),
-        'seed': int(options.seed),
+        self.lr = config.getfloat('optimization', 'lr')
+        self.batch_size = config.getint('optimization', 'batch_size')
+        self.N_epochs = config.getint('optimization', 'N_epochs')
+        self.N_batches = config.getint('optimization', 'N_batches')
+        self.N_eval_epoch = config.getint('optimization', 'N_eval_epoch')
+        self.seed = config.getint('optimization', 'seed')
 
         # training list
-        'wav_lst_tr': _read_list_file(options.tr_lst),
+        self.train_list = self._read_list_file(self.tr_lst)
 
         # test list
-        'wav_lst_te': _read_list_file(options.te_lst),
+        self.test_list = self._read_list_file(self.te_lst)
 
-    }
+    def _str_to_bool(self, s):
+        if s == 'True':
+            return True
+        elif s == 'False':
+            return False
+        else:
+            raise ValueError
 
-
-def str_to_bool(s):
-    if s == 'True':
-         return True
-    elif s == 'False':
-         return False
-    else:
-         raise ValueError
-
-
-def _read_list_file(list_file):
-    list_sig = []
-    with open(list_file, "r") as f:
-        lines = f.readlines()
-        for x in lines:
-            list_sig.append(x.rstrip())
-    return list_sig
+    def _read_list_file(self, list_file):
+        list_sig = []
+        with open(list_file, "r") as f:
+            lines = f.readlines()
+            for x in lines:
+                list_sig.append(x.rstrip())
+        return list_sig
 
 

@@ -3,6 +3,8 @@ import soundfile as sf
 import numpy as np
 from conf import *
 from model import *
+import tensorflow as tf
+import io
 
 np.random.seed(seed)
 class Validation():
@@ -41,7 +43,10 @@ class Validation():
                 print('WSHIFT: '+str(wshift))
                 pbar = tqdm(total=snt_te)
             for i in range(snt_te):
-                [signal, fs] = sf.read(data_folder+wav_lst_te[i])
+                #[signal, fs] = sf.read(data_folder+wav_lst_te[i])
+                fname = wav_lst_te[i]
+                with tf.io.gfile.GFile(fname, 'rb') as f:
+                    [signal, fs] = sf.read(io.BytesIO(f.read()))
 
                 signal = np.array(signal)
                 lab_batch=lab_dict[wav_lst_te[i]]

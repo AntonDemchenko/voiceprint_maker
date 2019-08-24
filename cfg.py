@@ -1,3 +1,4 @@
+import os
 import configparser
 import numpy as np
 
@@ -24,6 +25,7 @@ class SincNetConfigParser(configparser.ConfigParser):
         else:
             raise ValueError
 
+
 class SincNetCfg:
     def __init__(self, cfg_file):
         if cfg_file is None:
@@ -33,9 +35,9 @@ class SincNetCfg:
         config.read(cfg_file)
 
         # [data]
-        self.tr_lst = config.get('data', 'tr_lst')
-        self.te_lst = config.get('data', 'te_lst')
-        self.lab_dict = config.get('data', 'lab_dict')
+        self.train_list_file = config.get('data', 'tr_lst')
+        self.test_list_file = config.get('data', 'te_lst')
+        self.labels_dict_file = config.get('data', 'lab_dict')
         self.data_folder = config.get('data', 'data_folder') + '/'
         self.output_folder = config.get('data', 'output_folder')
         self.pt_file = config.get('data', 'pt_file')
@@ -61,9 +63,9 @@ class SincNetCfg:
         self.fc_drop = config.getfloatlist('dnn', 'fc_drop')
         self.fc_use_laynorm_inp = config.getboolean('dnn', 'fc_use_laynorm_inp')
         self.fc_use_batchnorm_inp = config.getboolean('dnn', 'fc_use_batchnorm_inp')
-        self.fc_use_batchnorm = [self._str_to_bool(e) for e in config.get('dnn', 'fc_use_batchnorm').split(',')]
-        self.fc_use_laynorm = [self._str_to_bool(e) for e in config.get('dnn', 'fc_use_laynorm').split(',')]
-        self.fc_act = [e for e in config.get('dnn', 'fc_act').split(',')]
+        self.fc_use_batchnorm = config.getbooleanlist('dnn', 'fc_use_batchnorm')
+        self.fc_use_laynorm = config.getbooleanlist('dnn', 'fc_use_laynorm')
+        self.fc_act = config.getlist('dnn', 'fc_act')
 
         # [class]
         self.class_lay = config.getintlist('class', 'class_lay')
@@ -82,14 +84,6 @@ class SincNetCfg:
         self.N_eval_epoch = config.getint('optimization', 'N_eval_epoch')
         self.seed = config.getint('optimization', 'seed')
 
-        # training list
-        self.train_list = self._read_list_file(self.tr_lst)
-        self.snt_tr = len(self.train_list)
-
-        # test list
-        self.test_list = self._read_list_file(self.te_lst)
-        self.snt_te = len(self.test_list)
-
         # Converting context and shift in samples
         self.wlen = int(self.fs * self.cw_len / 1000.00)
         self.wshift = int(self.fs * self.cw_shift / 1000.00)
@@ -97,21 +91,37 @@ class SincNetCfg:
         # Batch_dev
         self.Batch_dev = 128
 
-        # Loading label dictionary
-        self.lab_dict = np.load(self.lab_dict, allow_pickle=True).item()
-
         # Initialization of the minibatch (batch_size,[0=>x_t,1=>x_t+N,1=>random_samp])
-        self.sig_batch = np.zeros([self.batch_size, self.wlen])
-        self.lab_batch = np.zeros(self.batch_size)
+        # self.sig_batch = np.zeros([self.batch_size, self.wlen])
+        # self.lab_batch = np.zeros(self.batch_size)
         self.out_dim = self.class_lay[0]
 
-    def _str_to_bool(self, s):
-        if s == 'True':
-            return True
-        elif s == 'False':
-            return False
-        else:
-            raise ValueError
+        self.train_list = []
+        self.snt_tr = 0
+        self.test_list = []
+        self.snt_te = 0
+        self.lab_dict = {}
+
+    # def _str_to_bool(self, s):
+    #    if s == 'True':
+    #        return True
+    #    elif s == 'False':
+    #        return False
+    #    else:
+    #        raise ValueError
+
+    def load_data(self):
+        # Loading train list
+        self.train_list = self._read_list_file(os.path.join(self.data_folder, self.train_list_file))
+        self.snt_tr = len(self.train_list)
+
+        # Loading test list
+        self.test_list = self._read_list_file(os.path.join(self.data_folder, self.test_list_file))
+        self.snt_te = len(self.test_list)
+
+        # Loading label dictionary
+        self.lab_dict = np.load(os.path.join(self.data_folder, self.labels_dict_file),
+                                allow_pickle=True).item()
 
     def _read_list_file(self, list_file):
         list_sig = []

@@ -7,7 +7,13 @@ import math
 
 
 class SincConv1D(tf.keras.layers.Layer):
-    def __init__(self, N_filt, Filt_dim, fs, **kwargs):
+
+    def __init__(
+            self,
+            N_filt,
+            Filt_dim,
+            fs,
+            **kwargs):
         self.N_filt = N_filt
         self.Filt_dim = Filt_dim
         self.fs = fs
@@ -42,6 +48,8 @@ class SincConv1D(tf.keras.layers.Layer):
         super(SincConv1D, self).build(input_shape)  # Be sure to call this at the end
 
     def call(self, x):
+        # filters = K.zeros(shape=(N_filt, Filt_dim))
+
         # Get beginning and end frequencies of the filters.
         min_freq = 50.0
         min_band = 50.0
@@ -50,13 +58,14 @@ class SincConv1D(tf.keras.layers.Layer):
 
         # Filter window (hamming).
         n = np.linspace(0, self.Filt_dim, self.Filt_dim)
-        window = 0.54 - 0.46 * K.cos(2 * math.pi * n / self.Filt_dim)
-        window = K.cast(window, "float32")
-        window = K.variable(window)
+        window = 0.54 - 0.46 * np.cos(2 * math.pi * n / self.Filt_dim)
+        # window = K.cast(window, "float32")
+        # window = tf.Variable(window, name='sincnet_window', trainable=False)
 
         # TODO what is this?
-        t_right_linspace = np.linspace(1, (self.Filt_dim - 1) / 2, int((self.Filt_dim - 1) / 2))
-        t_right = K.variable(t_right_linspace / self.fs)
+        t_right_linspace = np.linspace(1, (self.Filt_dim - 1) / 2, int((self.Filt_dim - 1) / 2), dtype=np.float32)
+        t_right = np.float32(t_right_linspace / self.fs)
+        # t_right = tf.Variable(t_right, name='sincnet_t_right', trainable=False, dtype=tf.float32)
 
         # Compute the filters.
         output_list = []
@@ -81,7 +90,6 @@ class SincConv1D(tf.keras.layers.Layer):
         (where out_width is a function of the stride and padding as in conv2d) and returned to the caller.
         '''
 
-        # Do the convolution.
         out = K.conv1d(
             x,
             kernel=filters
@@ -100,10 +108,11 @@ class SincConv1D(tf.keras.layers.Layer):
 
 
 def sinc(band, t_right):
-    y_right = K.sin(2 * math.pi * band * t_right) / (2 * math.pi * band * t_right)
+    y_right = tf.sin(2 * tf.constant(np.pi, dtype=tf.float32) * band * t_right) / (
+                2 * tf.constant(np.pi, dtype=tf.float32) * band * t_right)
     # y_left = flip(y_right, 0) TODO remove if useless
     y_left = K.reverse(y_right, 0)
-    y = K.concatenate([y_left, K.variable(K.ones(1)), y_right])
+    y = K.cast(K.concatenate([y_left, tf.ones(1, dtype=tf.float32), y_right]), 'float32')
     return y
 
 

@@ -112,16 +112,15 @@ class SincNetCfg:
 
     def load_data(self):
         # Loading train list
-        self.train_list = self._read_list_file(os.path.join(self.data_folder, self.train_list_file))
+        self.train_list = self._read_list_file(self.train_list_file)
         self.snt_tr = len(self.train_list)
 
         # Loading test list
-        self.test_list = self._read_list_file(os.path.join(self.data_folder, self.test_list_file))
+        self.test_list = self._read_list_file(self.test_list_file)
         self.snt_te = len(self.test_list)
 
         # Loading label dictionary
-        self.lab_dict = np.load(os.path.join(self.data_folder, self.labels_dict_file),
-                                allow_pickle=True).item()
+        self.lab_dict = np.load(self.labels_dict_file, allow_pickle=True).item()
 
     def _read_list_file(self, list_file):
         list_sig = []

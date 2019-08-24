@@ -96,11 +96,16 @@ class SincNetCfg:
         # self.lab_batch = np.zeros(self.batch_size)
         self.out_dim = self.class_lay[0]
 
-        self.train_list = []
-        self.snt_tr = 0
-        self.test_list = []
-        self.snt_te = 0
-        self.lab_dict = {}
+        # Loading train list
+        self.train_list = self._read_list_file(self.train_list_file)
+        self.snt_tr = len(self.train_list)
+
+        # Loading test list
+        self.test_list = self._read_list_file(self.test_list_file)
+        self.snt_te = len(self.test_list)
+
+        # Loading label dictionary
+        self.lab_dict = np.load(self.labels_dict_file, allow_pickle=True).item()
 
     # def _str_to_bool(self, s):
     #    if s == 'True':

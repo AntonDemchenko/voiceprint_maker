@@ -64,7 +64,7 @@ class ValidationCallback(Callback):
 
 def main():
     from conf import *
-    
+
     # np.random.seed(seed)
     # from tensorflow import set_random_seed
     # set_random_seed(seed)

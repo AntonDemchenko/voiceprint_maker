@@ -20,11 +20,18 @@ def batchGenerator(conf, fact_amp, out_dim):
 
 
 def create_batches_rnd(conf, fact_amp, out_dim):
-    # Initialization of the minibatch (batch_size, [0=>x_t, 1=>x_t+N, 1=>random_samp])
+    """ 
+    Initialization of the minibatch 
+    (batch_size, [0=>x_t, 1=>x_t+N, 1=>random_samp])
+    """
     sig_batch = np.zeros([conf.batch_size, conf.wlen])
     lab_batch = []
     snt_id_arr = np.random.randint(conf.N_snt, size=conf.batch_size)
-    rand_amp_arr = np.random.uniform(1.0 - fact_amp, 1 + fact_amp, conf.batch_size)
+    rand_amp_arr = np.random.uniform(
+        1.0 - fact_amp, 
+        1 + fact_amp, 
+        conf.batch_size
+    )
     for i in range(conf.batch_size):
         # select a random sentence from the list
         fname = conf.data_folder + conf.wav_lst[snt_id_arr[i]]
@@ -32,7 +39,7 @@ def create_batches_rnd(conf, fact_amp, out_dim):
             [signal, fs] = sf.read(io.BytesIO(f.read()))
         # accesing to a random chunk
         snt_len = signal.shape[0]
-        snt_beg = np.random.randint(snt_len - conf.wlen - 1)  # randint(0, snt_len-2*wlen-1)
+        snt_beg = np.random.randint(snt_len - conf.wlen - 1)
         snt_end = snt_beg + conf.wlen
         sig_batch[i, :] = signal[snt_beg:snt_end] * rand_amp_arr[i]
         y = conf.lab_dict[conf.wav_lst[snt_id_arr[i]]]
@@ -48,18 +55,17 @@ def main():
     # from tensorflow import set_random_seed
     # set_random_seed(seed)
 
-    print('N_filt', conf.cnn_N_filt)
-    print('N_filt len', conf.cnn_len_filt)
-    print('FS', conf.fs)
-    print('WLEN', conf.wlen)
-
     input_shape = (conf.wlen, 1)
     out_dim = conf.class_lay[0]
     from model import getModel
 
     model = getModel(input_shape, out_dim)
     optimizer = RMSprop(lr=conf.lr, rho=0.9, epsilon=1e-8)
-    model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+    model.compile(
+        loss='categorical_crossentropy',
+        optimizer=optimizer,
+        metrics=['accuracy']
+    )
 
     checkpoints_path = os.path.join(conf.output_folder, 'checkpoints')
     if not os.path.exists(checkpoints_path):
@@ -76,7 +82,13 @@ def main():
         model.load_weights(conf.pt_file)
 
     train_generator = batchGenerator(conf, 0.2, out_dim)
-    model.fit_generator(train_generator, steps_per_epoch=conf.N_batches, epochs=conf.N_epochs, verbose=1, callbacks=callbacks)
+    model.fit_generator(
+        train_generator,
+        steps_per_epoch=conf.N_batches,
+        epochs=conf.N_epochs,
+        verbose=1,
+        callbacks=callbacks
+    )
 
 
 if __name__ == '__main__':

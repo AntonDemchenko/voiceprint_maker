@@ -63,14 +63,9 @@ class ValidationCallback(Callback):
 
 from conf import *
 
-#np.random.seed(seed)
-#from tensorflow import set_random_seed
-#set_random_seed(seed)
-
-from keras import models, layers
-import numpy as np
-import sincnet
-from keras.layers import Dense, Dropout, Activation
+# np.random.seed(seed)
+# from tensorflow import set_random_seed
+# set_random_seed(seed)
 
 print('N_filt', str(cnn_N_filt))
 print('N_filt len', str(cnn_len_filt))

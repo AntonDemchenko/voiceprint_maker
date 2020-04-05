@@ -61,45 +61,47 @@ class ValidationCallback(Callback):
         val = Validation(self.Batch_dev, self.data_folder, self.lab_dict, self.wav_lst_te, self.wlen, self.wshift, self.class_lay, self.model)
         val.validate(epoch)
 
-from conf import *
 
-# np.random.seed(seed)
-# from tensorflow import set_random_seed
-# set_random_seed(seed)
+def main():
+    from conf import *
+    
+    # np.random.seed(seed)
+    # from tensorflow import set_random_seed
+    # set_random_seed(seed)
 
-print('N_filt', str(cnn_N_filt))
-print('N_filt len', str(cnn_len_filt))
-print('FS', str(fs))
-print('WLEN', str(wlen))
+    print('N_filt', str(cnn_N_filt))
+    print('N_filt len', str(cnn_len_filt))
+    print('FS', str(fs))
+    print('WLEN', str(wlen))
 
-input_shape = (wlen, 1)
-out_dim = class_lay[0]
-from model import getModel
+    input_shape = (wlen, 1)
+    out_dim = class_lay[0]
+    from model import getModel
 
-model = getModel(input_shape, out_dim)
-optimizer = RMSprop(lr=lr, rho=0.9, epsilon=1e-8)
-model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics = ['accuracy'])
+    model = getModel(input_shape, out_dim)
+    optimizer = RMSprop(lr=lr, rho=0.9, epsilon=1e-8)
+    model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics = ['accuracy'])
 
+    checkpoints_path = os.path.join(output_folder, 'checkpoints')
+    if not os.path.exists(checkpoints_path):
+        os.makedirs(checkpoints_path)
 
-
-checkpoints_path = os.path.join(output_folder, 'checkpoints')
-
-tb = TensorBoard(log_dir=os.path.join(output_folder, 'logs', 'SincNet'))
-checkpointer = ModelCheckpoint(
+    tb = TensorBoard(log_dir=os.path.join(output_folder, 'logs', 'SincNet'))
+    checkpointer = ModelCheckpoint(
         filepath=os.path.join(checkpoints_path, 'SincNet.hdf5'),
         verbose=1,
-        save_best_only=False)
+        save_best_only=False
+    )
 
-if not os.path.exists(checkpoints_path):
-    os.makedirs(checkpoints_path)
+    validation = ValidationCallback(Batch_dev, data_folder, lab_dict, wav_lst_te, wlen, wshift, class_lay)
+    callbacks = [tb, checkpointer, validation]
+
+    if pt_file != 'none':
+        model.load_weights(pt_file)
+
+    train_generator = batchGenerator(batch_size, data_folder, wav_lst_tr, snt_tr, wlen, lab_dict, 0.2, out_dim)
+    model.fit_generator(train_generator, steps_per_epoch=N_batches, epochs=N_epochs, verbose=1, callbacks=callbacks)
 
 
-validation = ValidationCallback(Batch_dev, data_folder, lab_dict, wav_lst_te, wlen, wshift, class_lay)
-callbacks = [tb, checkpointer, validation]
-
-
-if pt_file!='none':
-   model.load_weights(pt_file)
-
-train_generator = batchGenerator(batch_size, data_folder, wav_lst_tr, snt_tr, wlen, lab_dict, 0.2, out_dim)
-model.fit_generator(train_generator, steps_per_epoch=N_batches, epochs=N_epochs, verbose=1, callbacks=callbacks)
+if __name__ == '__main__':
+    main()

@@ -7,7 +7,6 @@ import tensorflow as tf
 from keras.callbacks import Callback
 from keras.callbacks import ModelCheckpoint
 from keras.callbacks import TensorBoard
-from keras.layers import Dense
 from keras.optimizers import RMSprop
 from keras.utils import to_categorical
 from keras import backend as K
@@ -57,6 +56,7 @@ class ValidationCallback(Callback):
         self.lab_dict = lab_dict
         self.Batch_dev = Batch_dev
         self.class_lay = class_lay
+    
     def on_epoch_end(self, epoch, logs={}):
         val = Validation(self.Batch_dev, self.data_folder, self.lab_dict, self.wav_lst_te, self.wlen, self.wshift, self.class_lay, self.model)
         val.validate(epoch)
@@ -80,7 +80,7 @@ def main():
 
     model = getModel(input_shape, out_dim)
     optimizer = RMSprop(lr=lr, rho=0.9, epsilon=1e-8)
-    model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics = ['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
     checkpoints_path = os.path.join(output_folder, 'checkpoints')
     if not os.path.exists(checkpoints_path):

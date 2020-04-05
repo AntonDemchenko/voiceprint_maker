@@ -12,6 +12,7 @@ from keras.utils import to_categorical
 from keras import backend as K
 K.clear_session()
 
+import conf
 from test import Validation
 
 
@@ -63,44 +64,42 @@ class ValidationCallback(Callback):
 
 
 def main():
-    from conf import *
-
     # np.random.seed(seed)
     # from tensorflow import set_random_seed
     # set_random_seed(seed)
 
-    print('N_filt', str(cnn_N_filt))
-    print('N_filt len', str(cnn_len_filt))
-    print('FS', str(fs))
-    print('WLEN', str(wlen))
+    print('N_filt', conf.cnn_N_filt)
+    print('N_filt len', conf.cnn_len_filt)
+    print('FS', conf.fs)
+    print('WLEN', conf.wlen)
 
-    input_shape = (wlen, 1)
-    out_dim = class_lay[0]
+    input_shape = (conf.wlen, 1)
+    out_dim = conf.class_lay[0]
     from model import getModel
 
     model = getModel(input_shape, out_dim)
-    optimizer = RMSprop(lr=lr, rho=0.9, epsilon=1e-8)
+    optimizer = RMSprop(lr=conf.lr, rho=0.9, epsilon=1e-8)
     model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
-    checkpoints_path = os.path.join(output_folder, 'checkpoints')
+    checkpoints_path = os.path.join(conf.output_folder, 'checkpoints')
     if not os.path.exists(checkpoints_path):
         os.makedirs(checkpoints_path)
 
-    tb = TensorBoard(log_dir=os.path.join(output_folder, 'logs', 'SincNet'))
+    tb = TensorBoard(log_dir=os.path.join(conf.output_folder, 'logs', 'SincNet'))
     checkpointer = ModelCheckpoint(
         filepath=os.path.join(checkpoints_path, 'SincNet.hdf5'),
         verbose=1,
         save_best_only=False
     )
 
-    validation = ValidationCallback(Batch_dev, data_folder, lab_dict, wav_lst_te, wlen, wshift, class_lay)
+    validation = ValidationCallback(conf.Batch_dev, conf.data_folder, conf.lab_dict, conf.wav_lst_te, conf.wlen, conf.wshift, conf.class_lay)
     callbacks = [tb, checkpointer, validation]
 
-    if pt_file != 'none':
-        model.load_weights(pt_file)
+    if conf.pt_file != 'none':
+        model.load_weights(conf.pt_file)
 
-    train_generator = batchGenerator(batch_size, data_folder, wav_lst_tr, snt_tr, wlen, lab_dict, 0.2, out_dim)
-    model.fit_generator(train_generator, steps_per_epoch=N_batches, epochs=N_epochs, verbose=1, callbacks=callbacks)
+    train_generator = batchGenerator(conf.batch_size, conf.data_folder, conf.wav_lst_tr, conf.snt_tr, conf.wlen, conf.lab_dict, 0.2, out_dim)
+    model.fit_generator(train_generator, steps_per_epoch=conf.N_batches, epochs=conf.N_epochs, verbose=1, callbacks=callbacks)
 
 
 if __name__ == '__main__':

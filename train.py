@@ -1,21 +1,18 @@
-import os, io
-#import scipy.io.wavfile
-# python test.py --cfg=cfg/SincNet_TIMIT.cfg
-import soundfile as sf
+import io
+import os
 
-import tensorflow as tf
-from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping, CSVLogger
-from keras.callbacks import Callback
-import sys
 import numpy as np
-from keras.utils import to_categorical
-from data_io import ReadList,read_conf,str_to_bool
+import soundfile as sf
+import tensorflow as tf
+from keras.callbacks import Callback
+from keras.callbacks import ModelCheckpoint
+from keras.callbacks import TensorBoard
+from keras.layers import Dense
 from keras.optimizers import RMSprop
+from keras.utils import to_categorical
 from keras import backend as K
-import gc
-from tqdm import tqdm
-from keras.layers import MaxPooling1D, Conv1D, LeakyReLU, BatchNormalization, Dense, Flatten
 K.clear_session()
+
 from test import Validation
 
 

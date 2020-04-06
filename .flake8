@@ -1,0 +1,5 @@
+[flake8]
+exclude = .git,cfg,data_lists,venv
+inline-quotes = '
+application-import-names = conf
+import-order-style = pycharm

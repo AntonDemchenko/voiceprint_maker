@@ -15,12 +15,12 @@ class SincNetConfigParser(configparser.ConfigParser):
 
     def getlist(self, section, option):
         value = self.get(section, option)
-        return value.split(',')
+        return value.split(",")
 
     def _str_to_bool(self, s):
-        if s == 'True':
+        if s == "True":
             return True
-        elif s == 'False':
+        elif s == "False":
             return False
         else:
             raise ValueError
@@ -35,54 +35,56 @@ class SincNetCfg:
         config.read(cfg_file)
 
         # [data]
-        self.train_list_file = config.get('data', 'tr_lst')
-        self.test_list_file = config.get('data', 'te_lst')
-        self.labels_dict_file = config.get('data', 'lab_dict')
-        self.data_folder = config.get('data', 'data_folder') + '/'
-        self.output_folder = config.get('data', 'output_folder')
-        self.pt_file = config.get('data', 'pt_file')
+        self.train_list_file = config.get("data", "tr_lst")
+        self.test_list_file = config.get("data", "te_lst")
+        self.labels_dict_file = config.get("data", "lab_dict")
+        self.data_folder = config.get("data", "data_folder") + "/"
+        self.output_folder = config.get("data", "output_folder")
+        self.pt_file = config.get("data", "pt_file")
 
         # [windowing]
-        self.fs = config.getint('windowing', 'fs')
-        self.cw_len = config.getint('windowing', 'cw_len')
-        self.cw_shift = config.getint('windowing', 'cw_shift')
+        self.fs = config.getint("windowing", "fs")
+        self.cw_len = config.getint("windowing", "cw_len")
+        self.cw_shift = config.getint("windowing", "cw_shift")
 
         # [cnn]
-        self.cnn_N_filt = config.getintlist('cnn', 'cnn_N_filt')
-        self.cnn_len_filt = config.getintlist('cnn', 'cnn_len_filt')
-        self.cnn_max_pool_len = config.getintlist('cnn', 'cnn_max_pool_len')
-        self.cnn_use_laynorm_inp = config.getboolean('cnn', 'cnn_use_laynorm_inp')
-        self.cnn_use_batchnorm_inp = config.getboolean('cnn', 'cnn_use_batchnorm_inp')
-        self.cnn_use_laynorm = config.getbooleanlist('cnn', 'cnn_use_laynorm')
-        self.cnn_use_batchnorm = config.getbooleanlist('cnn', 'cnn_use_batchnorm')
-        self.cnn_act = config.getlist('cnn', 'cnn_act')
-        self.cnn_drop = config.getfloatlist('cnn', 'cnn_drop')
+        self.cnn_N_filt = config.getintlist("cnn", "cnn_N_filt")
+        self.cnn_len_filt = config.getintlist("cnn", "cnn_len_filt")
+        self.cnn_max_pool_len = config.getintlist("cnn", "cnn_max_pool_len")
+        self.cnn_use_laynorm_inp = config.getboolean("cnn", "cnn_use_laynorm_inp")
+        self.cnn_use_batchnorm_inp = config.getboolean("cnn", "cnn_use_batchnorm_inp")
+        self.cnn_use_laynorm = config.getbooleanlist("cnn", "cnn_use_laynorm")
+        self.cnn_use_batchnorm = config.getbooleanlist("cnn", "cnn_use_batchnorm")
+        self.cnn_act = config.getlist("cnn", "cnn_act")
+        self.cnn_drop = config.getfloatlist("cnn", "cnn_drop")
 
         # [dnn]
-        self.fc_lay = config.getintlist('dnn', 'fc_lay')
-        self.fc_drop = config.getfloatlist('dnn', 'fc_drop')
-        self.fc_use_laynorm_inp = config.getboolean('dnn', 'fc_use_laynorm_inp')
-        self.fc_use_batchnorm_inp = config.getboolean('dnn', 'fc_use_batchnorm_inp')
-        self.fc_use_batchnorm = config.getbooleanlist('dnn', 'fc_use_batchnorm')
-        self.fc_use_laynorm = config.getbooleanlist('dnn', 'fc_use_laynorm')
-        self.fc_act = config.getlist('dnn', 'fc_act')
+        self.fc_lay = config.getintlist("dnn", "fc_lay")
+        self.fc_drop = config.getfloatlist("dnn", "fc_drop")
+        self.fc_use_laynorm_inp = config.getboolean("dnn", "fc_use_laynorm_inp")
+        self.fc_use_batchnorm_inp = config.getboolean("dnn", "fc_use_batchnorm_inp")
+        self.fc_use_batchnorm = config.getbooleanlist("dnn", "fc_use_batchnorm")
+        self.fc_use_laynorm = config.getbooleanlist("dnn", "fc_use_laynorm")
+        self.fc_act = config.getlist("dnn", "fc_act")
 
         # [class]
-        self.class_lay = config.getintlist('class', 'class_lay')
-        self.class_drop = config.getfloatlist('class', 'class_drop')
-        self.class_use_laynorm_inp = config.getboolean('class', 'class_use_laynorm_inp')
-        self.class_use_batchnorm_inp = config.getboolean('class', 'class_use_batchnorm_inp')
-        self.class_use_batchnorm = config.getbooleanlist('class', 'class_use_batchnorm')
-        self.class_use_laynorm = config.getbooleanlist('class', 'class_use_laynorm')
-        self.class_act = config.getlist('class', 'class_act')
+        self.class_lay = config.getintlist("class", "class_lay")
+        self.class_drop = config.getfloatlist("class", "class_drop")
+        self.class_use_laynorm_inp = config.getboolean("class", "class_use_laynorm_inp")
+        self.class_use_batchnorm_inp = config.getboolean(
+            "class", "class_use_batchnorm_inp"
+        )
+        self.class_use_batchnorm = config.getbooleanlist("class", "class_use_batchnorm")
+        self.class_use_laynorm = config.getbooleanlist("class", "class_use_laynorm")
+        self.class_act = config.getlist("class", "class_act")
 
         # [optimization]
-        self.lr = config.getfloat('optimization', 'lr')
-        self.batch_size = config.getint('optimization', 'batch_size')
-        self.N_epochs = config.getint('optimization', 'N_epochs')
-        self.N_batches = config.getint('optimization', 'N_batches')
-        self.N_eval_epoch = config.getint('optimization', 'N_eval_epoch')
-        self.seed = config.getint('optimization', 'seed')
+        self.lr = config.getfloat("optimization", "lr")
+        self.batch_size = config.getint("optimization", "batch_size")
+        self.N_epochs = config.getint("optimization", "N_epochs")
+        self.N_batches = config.getint("optimization", "N_batches")
+        self.N_eval_epoch = config.getint("optimization", "N_eval_epoch")
+        self.seed = config.getint("optimization", "seed")
 
         # Converting context and shift in samples
         self.wlen = int(self.fs * self.cw_len / 1000.00)
@@ -134,5 +136,3 @@ class SincNetCfg:
             for x in lines:
                 list_sig.append(x.rstrip())
         return list_sig
-
-

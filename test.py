@@ -1,10 +1,13 @@
-from tqdm import tqdm
-import soundfile as sf
+import io
+
 import numpy as np
+import soundfile as sf
+import tensorflow as tf
+from tqdm import tqdm
+
 from conf import *
 from model import *
-import tensorflow as tf
-import io
+
 
 np.random.seed(seed)
 
@@ -32,7 +35,7 @@ class Validation:
         debug = self.debug
 
         if epoch is None or epoch % N_eval_epoch == 0:
-            print("Valuating test set...")
+            print('Valuating test set...')
 
             snt_te = len(wav_lst_te)
 
@@ -40,13 +43,13 @@ class Validation:
             err_sum_snt = 0
             stn_sum = 0
             if debug:
-                print("WLEN: " + str(wlen))
-                print("WSHIFT: " + str(wshift))
+                print('WLEN: ' + str(wlen))
+                print('WSHIFT: ' + str(wshift))
                 pbar = tqdm(total=snt_te)
             for i in range(snt_te):
                 # [signal, fs] = sf.read(data_folder+wav_lst_te[i])
                 fname = data_folder + wav_lst_te[i]
-                with tf.io.gfile.GFile(fname, "rb") as f:
+                with tf.io.gfile.GFile(fname, 'rb') as f:
                     [signal, fs] = sf.read(io.BytesIO(f.read()))
 
                 signal = np.array(signal)
@@ -107,7 +110,7 @@ class Validation:
                 temp_acc = str(round(1 - (err_sum / stn_sum), 4))
                 if debug:
                     pbar.set_description(
-                        "acc: {}, acc_snt: {}".format(temp_acc, temp_acc_stn)
+                        'acc: {}, acc_snt: {}'.format(temp_acc, temp_acc_stn)
                     )
                     pbar.update(1)
 
@@ -117,23 +120,23 @@ class Validation:
             if debug:
                 pbar.close()
             if epoch is None:
-                print("acc_te: {}, acc_te_snt: {}\n".format(acc, acc_snt))
+                print('acc_te: {}, acc_te_snt: {}\n'.format(acc, acc_snt))
             else:
                 print(
-                    "Epoch: {}, acc_te: {}, acc_te_snt: {}\n".format(
+                    'Epoch: {}, acc_te: {}, acc_te_snt: {}\n'.format(
                         epoch, acc, acc_snt
                     )
                 )
-                with open(output_folder + "/res.res", "a") as res_file:
+                with open(output_folder + '/res.res', 'a') as res_file:
                     res_file.write(
-                        "epoch %i, acc_te=%f acc_te_snt=%f\n" % (epoch, acc, acc_snt)
+                        'epoch %i, acc_te=%f acc_te_snt=%f\n' % (epoch, acc, acc_snt)
                     )
             return (acc, acc_snt)
 
 
 def main():
-    print("Validation...")
-    if pt_file != "none":
+    print('Validation...')
+    if pt_file != 'none':
         weight_file = pt_file
         input_shape = (wlen, 1)
         out_dim = class_lay[0]
@@ -152,8 +155,8 @@ def main():
         )
         val.validate()
     else:
-        print("No PT FILE")
+        print('No PT FILE')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

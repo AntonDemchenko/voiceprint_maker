@@ -25,7 +25,7 @@ def create_batches_rnd(conf, fact_amp, out_dim):
     """
     sig_batch = np.zeros([conf.batch_size, conf.wlen])
     lab_batch = []
-    snt_id_arr = np.random.randint(conf.N_snt, size=conf.batch_size)
+    snt_id_arr = np.random.randint(conf.snt_tr, size=conf.batch_size)
     rand_amp_arr = np.random.uniform(
         1.0 - fact_amp,
         1 + fact_amp,
@@ -33,7 +33,7 @@ def create_batches_rnd(conf, fact_amp, out_dim):
     )
     for i in range(conf.batch_size):
         # select a random sentence from the list
-        fname = conf.data_folder + conf.wav_lst[snt_id_arr[i]]
+        fname = conf.data_folder + conf.wav_lst_tr[snt_id_arr[i]]
         with tf.io.gfile.GFile(fname, 'rb') as f:
             [signal, fs] = sf.read(io.BytesIO(f.read()))
         # accesing to a random chunk
@@ -41,7 +41,7 @@ def create_batches_rnd(conf, fact_amp, out_dim):
         snt_beg = np.random.randint(snt_len - conf.wlen - 1)
         snt_end = snt_beg + conf.wlen
         sig_batch[i, :] = signal[snt_beg:snt_end] * rand_amp_arr[i]
-        y = conf.lab_dict[conf.wav_lst[snt_id_arr[i]]]
+        y = conf.lab_dict[conf.wav_lst_tr[snt_id_arr[i]]]
         yt = to_categorical(y, num_classes=out_dim)
         lab_batch.append(yt)
     a, b = np.shape(sig_batch)

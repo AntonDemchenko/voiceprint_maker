@@ -1,7 +1,9 @@
+import numpy as np
+
 from data_io import ReadList
 from data_io import read_conf
 from data_io import str_to_bool
-import numpy as np
+
 
 # Reading cfg file
 options = read_conf()
@@ -11,7 +13,7 @@ tr_lst = options.tr_lst
 te_lst = options.te_lst
 pt_file = options.pt_file
 class_dict_file = options.lab_dict
-data_folder = options.data_folder + "/"
+data_folder = options.data_folder + '/'
 output_folder = options.output_folder
 
 # [windowing]
@@ -20,34 +22,34 @@ cw_len = int(options.cw_len)
 cw_shift = int(options.cw_shift)
 
 # [cnn]
-cnn_N_filt = list(map(int, options.cnn_N_filt.split(",")))
-cnn_len_filt = list(map(int, options.cnn_len_filt.split(",")))
-cnn_max_pool_len = list(map(int, options.cnn_max_pool_len.split(",")))
+cnn_N_filt = list(map(int, options.cnn_N_filt.split(',')))
+cnn_len_filt = list(map(int, options.cnn_len_filt.split(',')))
+cnn_max_pool_len = list(map(int, options.cnn_max_pool_len.split(',')))
 cnn_use_laynorm_inp = str_to_bool(options.cnn_use_laynorm_inp)
 cnn_use_batchnorm_inp = str_to_bool(options.cnn_use_batchnorm_inp)
-cnn_use_laynorm = list(map(str_to_bool, options.cnn_use_laynorm.split(",")))
-cnn_use_batchnorm = list(map(str_to_bool, options.cnn_use_batchnorm.split(",")))
-cnn_act = list(map(str, options.cnn_act.split(",")))
-cnn_drop = list(map(float, options.cnn_drop.split(",")))
+cnn_use_laynorm = list(map(str_to_bool, options.cnn_use_laynorm.split(',')))
+cnn_use_batchnorm = list(map(str_to_bool, options.cnn_use_batchnorm.split(',')))
+cnn_act = list(map(str, options.cnn_act.split(',')))
+cnn_drop = list(map(float, options.cnn_drop.split(',')))
 
 
 # [dnn]
-fc_lay = list(map(int, options.fc_lay.split(",")))
-fc_drop = list(map(float, options.fc_drop.split(",")))
+fc_lay = list(map(int, options.fc_lay.split(',')))
+fc_drop = list(map(float, options.fc_drop.split(',')))
 fc_use_laynorm_inp = str_to_bool(options.fc_use_laynorm_inp)
 fc_use_batchnorm_inp = str_to_bool(options.fc_use_batchnorm_inp)
-fc_use_batchnorm = list(map(str_to_bool, options.fc_use_batchnorm.split(",")))
-fc_use_laynorm = list(map(str_to_bool, options.fc_use_laynorm.split(",")))
-fc_act = list(map(str, options.fc_act.split(",")))
+fc_use_batchnorm = list(map(str_to_bool, options.fc_use_batchnorm.split(',')))
+fc_use_laynorm = list(map(str_to_bool, options.fc_use_laynorm.split(',')))
+fc_act = list(map(str, options.fc_act.split(',')))
 
 # [class]
-class_lay = list(map(int, options.class_lay.split(",")))
-class_drop = list(map(float, options.class_drop.split(",")))
+class_lay = list(map(int, options.class_lay.split(',')))
+class_drop = list(map(float, options.class_drop.split(',')))
 class_use_laynorm_inp = str_to_bool(options.class_use_laynorm_inp)
 class_use_batchnorm_inp = str_to_bool(options.class_use_batchnorm_inp)
-class_use_batchnorm = list(map(str_to_bool, options.class_use_batchnorm.split(",")))
-class_use_laynorm = list(map(str_to_bool, options.class_use_laynorm.split(",")))
-class_act = list(map(str, options.class_act.split(",")))
+class_use_batchnorm = list(map(str_to_bool, options.class_use_batchnorm.split(',')))
+class_use_laynorm = list(map(str_to_bool, options.class_use_laynorm.split(',')))
+class_act = list(map(str, options.class_act.split(',')))
 
 
 # [optimization]

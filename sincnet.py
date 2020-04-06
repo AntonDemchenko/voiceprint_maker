@@ -1,17 +1,20 @@
-from keras import backend as K
-from keras.engine.topology import Layer
-from keras.utils import conv_utils
-import numpy as np
 import math
 
-debug = False
+import numpy as np
+from keras import backend as K
 from keras import initializers
+from keras.engine.topology import Layer
+from keras.utils import conv_utils
+
+debug = False
 
 
 class LayerNorm(Layer):
     """ Layer Normalization in the style of https://arxiv.org/abs/1607.06450 """
 
-    def __init__(self, scale_initializer="ones", bias_initializer="zeros", **kwargs):
+    def __init__(
+        self, scale_initializer='ones', bias_initializer='zeros', **kwargs
+    ):
         super(LayerNorm, self).__init__(**kwargs)
         self.epsilon = 1e-6
         self.scale_initializer = initializers.get(scale_initializer)
@@ -22,13 +25,13 @@ class LayerNorm(Layer):
             shape=(input_shape[-1],),
             initializer=self.scale_initializer,
             trainable=True,
-            name="{}_scale".format(self.name),
+            name='{}_scale'.format(self.name),
         )
         self.bias = self.add_weight(
             shape=(input_shape[-1],),
             initializer=self.bias_initializer,
             trainable=True,
-            name="{}_bias".format(self.name),
+            name='{}_bias'.format(self.name),
         )
         self.built = True
 
@@ -60,12 +63,15 @@ class SincConv1D(Layer):
 
         # The filters are trainable parameters.
         self.filt_b1 = self.add_weight(
-            name="filt_b1", shape=(self.N_filt,), initializer="uniform", trainable=True
+            name='filt_b1',
+            shape=(self.N_filt,),
+            initializer='uniform',
+            trainable=True
         )
         self.filt_band = self.add_weight(
-            name="filt_band",
+            name='filt_band',
             shape=(self.N_filt,),
-            initializer="uniform",
+            initializer='uniform',
             trainable=True,
         )
 
@@ -87,7 +93,7 @@ class SincConv1D(Layer):
 
     def call(self, x):
 
-        debug_print("call")
+        debug_print('call')
         # filters = K.zeros(shape=(N_filt, Filt_dim))
 
         # Get beginning and end frequencies of the filters.
@@ -101,25 +107,29 @@ class SincConv1D(Layer):
         # Filter window (hamming).
         n = np.linspace(0, self.Filt_dim, self.Filt_dim)
         window = 0.54 - 0.46 * K.cos(2 * math.pi * n / self.Filt_dim)
-        window = K.cast(window, "float32")
+        window = K.cast(window, 'float32')
         window = K.variable(window)
-        debug_print("  window", window)
+        debug_print('  window', window)
 
         # TODO what is this?
         t_right_linspace = np.linspace(
             1, (self.Filt_dim - 1) / 2, int((self.Filt_dim - 1) / 2)
         )
         t_right = K.variable(t_right_linspace / self.fs)
-        debug_print("  t_right", t_right)
+        debug_print('  t_right', t_right)
 
         # Compute the filters.
         output_list = []
         for i in range(self.N_filt):
             low_pass1 = (
-                2 * filt_beg_freq[i] * sinc(filt_beg_freq[i] * self.freq_scale, t_right)
+                2 * filt_beg_freq[i] * sinc(
+                    filt_beg_freq[i] * self.freq_scale, t_right
+                )
             )
             low_pass2 = (
-                2 * filt_end_freq[i] * sinc(filt_end_freq[i] * self.freq_scale, t_right)
+                2 * filt_end_freq[i] * sinc(
+                    filt_end_freq[i] * self.freq_scale, t_right
+                )
             )
             band_pass = low_pass2 - low_pass1
             band_pass = band_pass / K.max(band_pass)
@@ -131,27 +141,27 @@ class SincConv1D(Layer):
         )  # (251,1,80) in TF: (filter_width, in_channels, out_channels) in PyTorch (out_channels, in_channels, filter_width)
 
         """
-        Given an input tensor of shape [batch, in_width, in_channels] if data_format is "NWC", 
-        or [batch, in_channels, in_width] if data_format is "NCW", and a filter / kernel tensor of shape [filter_width, in_channels, out_channels], 
+        Given an input tensor of shape [batch, in_width, in_channels] if data_format is "NWC",
+        or [batch, in_channels, in_width] if data_format is "NCW", and a filter / kernel tensor of shape [filter_width, in_channels, out_channels],
         this op reshapes the arguments to pass them to conv2d to perform the equivalent convolution operation.
-        Internally, this op reshapes the input tensors and invokes tf.nn.conv2d. For example, if data_format does not start with "NC", 
-        a tensor of shape [batch, in_width, in_channels] is reshaped to [batch, 1, in_width, in_channels], and the filter is reshaped to 
-        [1, filter_width, in_channels, out_channels]. The result is then reshaped back to [batch, out_width, out_channels] 
+        Internally, this op reshapes the input tensors and invokes tf.nn.conv2d. For example, if data_format does not start with "NC",
+        a tensor of shape [batch, in_width, in_channels] is reshaped to [batch, 1, in_width, in_channels], and the filter is reshaped to
+        [1, filter_width, in_channels, out_channels]. The result is then reshaped back to [batch, out_width, out_channels]
         (where out_width is a function of the stride and padding as in conv2d) and returned to the caller.
         """
 
         # Do the convolution.
-        debug_print("call")
-        debug_print("  x", x)
-        debug_print("  filters", filters)
+        debug_print('call')
+        debug_print('  x', x)
+        debug_print('  filters', filters)
         out = K.conv1d(x, kernel=filters)
-        debug_print("  out", out)
+        debug_print('  out', out)
 
         return out
 
     def compute_output_shape(self, input_shape):
         new_size = conv_utils.conv_output_length(
-            input_shape[1], self.Filt_dim, padding="valid", stride=1, dilation=1
+            input_shape[1], self.Filt_dim, padding='valid', stride=1, dilation=1
         )
         return (input_shape[0],) + (new_size,) + (self.N_filt,)
 

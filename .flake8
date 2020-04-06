@@ -1,5 +1,5 @@
 [flake8]
 exclude = .git,cfg,data_lists,venv
 inline-quotes = '
-application-import-names = conf,data_io,model
+application-import-names = conf,data_io,model,sincnet
 import-order-style = pycharm

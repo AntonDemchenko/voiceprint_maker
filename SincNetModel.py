@@ -1,9 +1,10 @@
-import tensorflow as tf
+import math
+
 import numpy as np
+import tensorflow as tf
+from keras.utils import conv_utils
 from tensorflow.keras import backend as K
 from tensorflow.keras import layers
-from keras.utils import conv_utils
-import math
 
 
 class SincConv1D(tf.keras.layers.Layer):
@@ -17,12 +18,12 @@ class SincConv1D(tf.keras.layers.Layer):
     def build(self, input_shape):
         # The filters are trainable parameters.
         self.filt_b1 = self.add_weight(
-            name="filt_b1", shape=(self.N_filt,), initializer="uniform", trainable=True
+            name='filt_b1', shape=(self.N_filt,), initializer='uniform', trainable=True
         )
         self.filt_band = self.add_weight(
-            name="filt_band",
+            name='filt_band',
             shape=(self.N_filt,),
-            initializer="uniform",
+            initializer='uniform',
             trainable=True,
         )
 
@@ -56,7 +57,7 @@ class SincConv1D(tf.keras.layers.Layer):
         # Filter window (hamming).
         n = np.linspace(0, self.Filt_dim, self.Filt_dim)
         window = 0.54 - 0.46 * np.cos(2 * math.pi * n / self.Filt_dim)
-        # window = K.cast(window, "float32")
+        # window = K.cast(window, 'float32')
         # window = tf.Variable(window, name='sincnet_window', trainable=False)
 
         # TODO what is this?
@@ -85,12 +86,12 @@ class SincConv1D(tf.keras.layers.Layer):
         )  # (251,1,80) in TF: (filter_width, in_channels, out_channels) in PyTorch (out_channels, in_channels, filter_width)
 
         """
-        Given an input tensor of shape [batch, in_width, in_channels] if data_format is "NWC", 
-        or [batch, in_channels, in_width] if data_format is "NCW", and a filter / kernel tensor of shape [filter_width, in_channels, out_channels], 
+        Given an input tensor of shape [batch, in_width, in_channels] if data_format is "NWC",
+        or [batch, in_channels, in_width] if data_format is "NCW", and a filter / kernel tensor of shape [filter_width, in_channels, out_channels],
         this op reshapes the arguments to pass them to conv2d to perform the equivalent convolution operation.
-        Internally, this op reshapes the input tensors and invokes tf.nn.conv2d. For example, if data_format does not start with "NC", 
-        a tensor of shape [batch, in_width, in_channels] is reshaped to [batch, 1, in_width, in_channels], and the filter is reshaped to 
-        [1, filter_width, in_channels, out_channels]. The result is then reshaped back to [batch, out_width, out_channels] 
+        Internally, this op reshapes the input tensors and invokes tf.nn.conv2d. For example, if data_format does not start with "NC",
+        a tensor of shape [batch, in_width, in_channels] is reshaped to [batch, 1, in_width, in_channels], and the filter is reshaped to
+        [1, filter_width, in_channels, out_channels]. The result is then reshaped back to [batch, out_width, out_channels]
         (where out_width is a function of the stride and padding as in conv2d) and returned to the caller.
         """
 
@@ -100,7 +101,7 @@ class SincConv1D(tf.keras.layers.Layer):
 
     def compute_output_shape(self, input_shape):
         new_size = conv_utils.conv_output_length(
-            input_shape[1], self.Filt_dim, padding="valid", stride=1, dilation=1
+            input_shape[1], self.Filt_dim, padding='valid', stride=1, dilation=1
         )
         return (input_shape[0],) + (new_size,) + (self.N_filt,)
 
@@ -112,14 +113,14 @@ def sinc(band, t_right):
     # y_left = flip(y_right, 0) TODO remove if useless
     y_left = K.reverse(y_right, 0)
     y = K.cast(
-        K.concatenate([y_left, tf.ones(1, dtype=tf.float32), y_right]), "float32"
+        K.concatenate([y_left, tf.ones(1, dtype=tf.float32), y_right]), 'float32'
     )
     return y
 
 
 class SincNetModel(tf.keras.Model):
     def __init__(self, options):
-        super(SincNetModel, self).__init__(name="SincNetModel")
+        super(SincNetModel, self).__init__(name='SincNetModel')
         self.options = options
 
         self.sinc_1 = SincConv1D(
@@ -133,7 +134,7 @@ class SincNetModel(tf.keras.Model):
         self.leaky_relu_1 = layers.LeakyReLU(alpha=0.2)
 
         self.conv_2 = layers.Conv1D(
-            options.cnn_N_filt[1], options.cnn_len_filt[1], strides=1, padding="valid"
+            options.cnn_N_filt[1], options.cnn_len_filt[1], strides=1, padding='valid'
         )
         self.maxpool_2 = layers.MaxPooling1D(pool_size=options.cnn_max_pool_len[1])
         if options.cnn_use_batchnorm[1]:
@@ -143,7 +144,7 @@ class SincNetModel(tf.keras.Model):
         self.leaky_relu_2 = layers.LeakyReLU(alpha=0.2)
 
         self.conv_3 = layers.Conv1D(
-            options.cnn_N_filt[2], options.cnn_len_filt[2], strides=1, padding="valid"
+            options.cnn_N_filt[2], options.cnn_len_filt[2], strides=1, padding='valid'
         )
         self.maxpool_3 = layers.MaxPooling1D(pool_size=options.cnn_max_pool_len[2])
         if options.cnn_use_batchnorm[2]:
@@ -174,7 +175,7 @@ class SincNetModel(tf.keras.Model):
             self.layer_norm_6 = layers.LayerNormalization(epsilon=1e-6)
         self.leaky_relu_6 = layers.LeakyReLU(alpha=0.2)
 
-        self.prediction = layers.Dense(options.out_dim, activation="softmax")
+        self.prediction = layers.Dense(options.out_dim, activation='softmax')
 
     def call(self, inputs):
         # Define your forward pass here,

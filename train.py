@@ -54,11 +54,9 @@ def main():
 
     K.clear_session()
 
-    input_shape = (cfg.wlen, 1)
-    out_dim = cfg.class_lay[0]
     from model import getModel
 
-    model = getModel(input_shape, out_dim)
+    model = getModel(cfg)
     optimizer = RMSprop(lr=cfg.lr, rho=0.9, epsilon=1e-8)
     model.compile(
         loss='categorical_crossentropy',

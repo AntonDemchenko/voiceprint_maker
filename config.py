@@ -109,18 +109,6 @@ class SincNetCfg:
         # Loading label dictionary
         self.lab_dict = np.load(self.labels_dict_file, allow_pickle=True).item()
 
-    def load_data(self):
-        # Loading train list
-        self.train_list = self._read_list_file(self.train_list_file)
-        self.snt_tr = len(self.train_list)
-
-        # Loading test list
-        self.test_list = self._read_list_file(self.test_list_file)
-        self.snt_te = len(self.test_list)
-
-        # Loading label dictionary
-        self.lab_dict = np.load(self.labels_dict_file, allow_pickle=True).item()
-
     def _read_list_file(self, list_file):
         list_sig = []
         with open(list_file, 'r') as f:
@@ -128,3 +116,12 @@ class SincNetCfg:
             for x in lines:
                 list_sig.append(x.rstrip())
         return list_sig
+
+
+def read_config():
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option('--cfg')
+    options, _ = parser.parse_args()
+    cfg = SincNetCfg(options.cfg)
+    return cfg

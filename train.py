@@ -10,7 +10,7 @@ from tensorflow.keras.optimizers import RMSprop
 from tensorflow.keras.utils import to_categorical
 
 from config import read_config
-from SincNetModel import SincNetModel
+from sincnet import SincNetModel
 
 
 def batchGenerator(cfg, fact_amp):

@@ -6,7 +6,7 @@ import tensorflow as tf
 from tqdm import tqdm
 
 from config import read_config
-from SincNetModel import SincNetModel
+from sincnet import SincNetModel
 
 
 class Validation:

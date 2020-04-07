@@ -5,69 +5,67 @@ import soundfile as sf
 import tensorflow as tf
 from tqdm import tqdm
 
-import conf
+from config import read_config
 from model import getModel
 
 
-np.random.seed(conf.seed)
-
-
 class Validation:
-    def __init__(self, model, debug=False):
+    def __init__(self, cfg, model, debug=False):
+        self.cfg = cfg
         self.model = model
         self.debug = debug
 
     def validate(self, epoch=None):
 
-        if epoch is None or epoch % conf.N_eval_epoch == 0:
+        if epoch is None or epoch % self.cfg.N_eval_epoch == 0:
             print('Valuating test set...')
 
-            snt_te = len(conf.wav_lst_te)
+            snt_te = len(self.cfg.wav_lst_te)
 
             err_sum = 0
             err_sum_snt = 0
             stn_sum = 0
             if self.debug:
-                print('WLEN: ' + str(conf.wlen))
-                print('WSHIFT: ' + str(conf.wshift))
+                print('WLEN: ' + str(self.cfg.wlen))
+                print('WSHIFT: ' + str(self.cfg.wshift))
                 pbar = tqdm(total=snt_te)
             for i in range(snt_te):
                 # [signal, fs] = sf.read(data_folder+wav_lst_te[i])
-                fname = conf.data_folder + conf.wav_lst_te[i]
+                fname = self.cfg.data_folder + self.cfg.wav_lst_te[i]
                 with tf.io.gfile.GFile(fname, 'rb') as f:
                     [signal, fs] = sf.read(io.BytesIO(f.read()))
 
                 signal = np.array(signal)
-                lab_batch = conf.lab_dict[conf.wav_lst_te[i]]
+                lab_batch = self.cfg.lab_dict[self.cfg.wav_lst_te[i]]
 
                 # split signals into chunck
                 beg_samp = 0
-                end_samp = conf.wlen
+                end_samp = self.cfg.wlen
 
-                N_fr = int((signal.shape[0] - conf.wlen) / (conf.wshift))
+                N_fr = int((signal.shape[0] - self.cfg.wlen) / (self.cfg.wshift))
 
-                sig_arr = np.zeros([conf.Batch_dev, conf.wlen])
+                sig_arr = np.zeros([self.cfg.Batch_dev, self.cfg.wlen])
 
                 lab = np.zeros(N_fr + 1) + lab_batch
-                pout = np.zeros(shape=(N_fr + 1, conf.class_lay[-1]))
+                pout = np.zeros(shape=(N_fr + 1, self.cfg.class_lay[-1]))
                 count_fr = 0
                 count_fr_tot = 0
 
                 while end_samp < signal.shape[0]:  # for each chunck
                     sig_arr[count_fr, :] = signal[beg_samp:end_samp]
-                    beg_samp = beg_samp + conf.wshift
-                    end_samp = beg_samp + conf.wlen
+                    beg_samp = beg_samp + self.cfg.wshift
+                    end_samp = beg_samp + self.cfg.wlen
                     count_fr = count_fr + 1
                     count_fr_tot = count_fr_tot + 1
-                    if count_fr == conf.Batch_dev:
+                    if count_fr == self.cfg.Batch_dev:
                         a, b = np.shape(sig_arr)
                         inp = sig_arr.reshape(a, b, 1)
                         inp = np.array(inp)
                         pout[
-                            count_fr_tot - conf.Batch_dev : count_fr_tot, :
+                            count_fr_tot - self.cfg.Batch_dev : count_fr_tot, :
                         ] = self.model.predict(inp, verbose=0)
                         count_fr = 0
-                        sig_arr = np.zeros([conf.Batch_dev, conf.wlen])
+                        sig_arr = np.zeros([self.cfg.Batch_dev, self.cfg.wlen])
 
                 # Add the last items left
                 if count_fr > 0:
@@ -112,7 +110,7 @@ class Validation:
                         epoch, acc, acc_snt
                     )
                 )
-                with open(conf.output_folder + '/res.res', 'a') as res_file:
+                with open(self.cfg.output_folder + '/res.res', 'a') as res_file:
                     res_file.write(
                         'epoch %i, acc_te=%f acc_te_snt=%f\n' % (
                             epoch, acc, acc_snt
@@ -122,19 +120,15 @@ class Validation:
 
 
 def main():
-    print('Validation...')
-    if conf.pt_file != 'none':
-        input_shape = (conf.wlen, 1)
-        out_dim = conf.class_lay[0]
-        model = getModel(input_shape, out_dim)
-        model.load_weights(conf.pt_file)
-        val = Validation(
-            model,
-            True,
-        )
-        val.validate()
-    else:
-        print('No PT FILE')
+    cfg = read_config()
+    model = getModel(cfg)
+    model.load_weights(cfg.pt_file)
+    val = Validation(
+        cfg,
+        model,
+        True,
+    )
+    val.validate()
 
 
 if __name__ == '__main__':

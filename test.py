@@ -6,7 +6,7 @@ import tensorflow as tf
 from tqdm import tqdm
 
 from config import read_config
-from model import getModel
+from SincNetModel import SincNetModel
 
 
 class Validation:
@@ -121,7 +121,7 @@ class Validation:
 
 def main():
     cfg = read_config()
-    model = getModel(cfg)
+    model = SincNetModel(cfg)
     model.load_weights(cfg.pt_file)
     val = Validation(
         cfg,

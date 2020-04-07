@@ -4,12 +4,13 @@ import os
 import numpy as np
 import soundfile as sf
 import tensorflow as tf
-from keras import backend as K
-from keras.callbacks import ModelCheckpoint
-from keras.optimizers import RMSprop
-from keras.utils import to_categorical
+from tensorflow.keras import backend as K
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.optimizers import RMSprop
+from tensorflow.keras.utils import to_categorical
 
 from config import read_config
+from SincNetModel import SincNetModel
 
 
 def batchGenerator(cfg, fact_amp):
@@ -54,9 +55,8 @@ def main():
 
     K.clear_session()
 
-    from model import getModel
+    model = SincNetModel(cfg)
 
-    model = getModel(cfg)
     optimizer = RMSprop(lr=cfg.lr, rho=0.9, epsilon=1e-8)
     model.compile(
         loss='categorical_crossentropy',

@@ -18,7 +18,10 @@ class SincConv1D(tf.keras.layers.Layer):
     def build(self, input_shape):
         # The filters are trainable parameters.
         self.filt_b1 = self.add_weight(
-            name='filt_b1', shape=(self.N_filt,), initializer='uniform', trainable=True
+            name='filt_b1',
+            shape=(self.N_filt,),
+            initializer='uniform',
+            trainable=True
         )
         self.filt_band = self.add_weight(
             name='filt_band',

@@ -1,5 +1,5 @@
-import os
 import configparser
+
 import numpy as np
 
 
@@ -71,7 +71,9 @@ class SincNetCfg:
         self.class_lay = config.getintlist('class', 'class_lay')
         self.class_drop = config.getfloatlist('class', 'class_drop')
         self.class_use_laynorm_inp = config.getboolean('class', 'class_use_laynorm_inp')
-        self.class_use_batchnorm_inp = config.getboolean('class', 'class_use_batchnorm_inp')
+        self.class_use_batchnorm_inp = config.getboolean(
+            'class', 'class_use_batchnorm_inp'
+        )
         self.class_use_batchnorm = config.getbooleanlist('class', 'class_use_batchnorm')
         self.class_use_laynorm = config.getbooleanlist('class', 'class_use_laynorm')
         self.class_act = config.getlist('class', 'class_act')
@@ -107,32 +109,19 @@ class SincNetCfg:
         # Loading label dictionary
         self.lab_dict = np.load(self.labels_dict_file, allow_pickle=True).item()
 
-    # def _str_to_bool(self, s):
-    #    if s == 'True':
-    #        return True
-    #    elif s == 'False':
-    #        return False
-    #    else:
-    #        raise ValueError
-
-    def load_data(self):
-        # Loading train list
-        self.train_list = self._read_list_file(self.train_list_file)
-        self.snt_tr = len(self.train_list)
-
-        # Loading test list
-        self.test_list = self._read_list_file(self.test_list_file)
-        self.snt_te = len(self.test_list)
-
-        # Loading label dictionary
-        self.lab_dict = np.load(self.labels_dict_file, allow_pickle=True).item()
-
     def _read_list_file(self, list_file):
         list_sig = []
-        with open(list_file, "r") as f:
+        with open(list_file, 'r') as f:
             lines = f.readlines()
             for x in lines:
                 list_sig.append(x.rstrip())
         return list_sig
 
 
+def read_config():
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option('--cfg')
+    options, _ = parser.parse_args()
+    cfg = SincNetCfg(options.cfg)
+    return cfg

@@ -109,6 +109,8 @@ class SincNetCfg:
         # Loading label dictionary
         self.lab_dict = np.load(self.labels_dict_file, allow_pickle=True).item()
 
+        self.fact_amp = 0.2
+
     def _read_list_file(self, list_file):
         list_sig = []
         with open(list_file, 'r') as f:

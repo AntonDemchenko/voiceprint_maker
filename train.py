@@ -26,12 +26,14 @@ def main():
     checkpoints_path = os.path.join(cfg.output_folder, 'checkpoints')
     if not os.path.exists(checkpoints_path):
         os.makedirs(checkpoints_path)
-
     checkpointer = ModelCheckpoint(
-        filepath=os.path.join(checkpoints_path, 'SincNet.hdf5'),
+        filepath=os.path.join(checkpoints_path, 'SincNet-{epoch:04d}.hdf5'),
+        monitor='val_loss',
         verbose=1,
-        save_best_only=False,
+        save_best_only=True,
+        period=cfg.N_eval_epoch
     )
+
     callbacks = [checkpointer]
 
     if cfg.pt_file != 'none':

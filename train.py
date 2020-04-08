@@ -13,45 +13,31 @@ from config import read_config
 from sincnet import SincNetModel
 
 
-def batch_generator(cfg):
-    while True:
-        signal_batch, label_batch = get_random_batch(cfg)
-        yield signal_batch, label_batch
+def read_wav(path):
+    with tf.io.gfile.GFile(path, 'rb') as f:
+        signal, _ = sf.read(io.BytesIO(f.read()))
+        return signal
 
 
-def get_random_chunk(signal, cfg):
-    amp = np.random.uniform(1.0 - cfg.fact_amp, 1.0 + cfg.fact_amp)
-    signal_len = signal.shape[0]
-    begin = np.random.randint(signal_len - cfg.wlen)
-    end = begin + cfg.wlen
-    return signal[begin:end] * amp
+def get_label(path, cfg):
+    label = cfg.lab_dict[path]
+    return to_categorical(label, num_classes=cfg.out_dim)
 
 
 def get_sample(path, cfg):
     full_path = cfg.data_folder + path
-    with tf.io.gfile.GFile(full_path, 'rb') as f:
-        [signal, _] = sf.read(io.BytesIO(f.read()))
-    label = to_categorical(cfg.lab_dict[path], num_classes=cfg.out_dim)
-    return signal, label
+    signal = read_wav(full_path)
+    chunk_begin = np.random.randint(signal.shape[0] - cfg.wlen)
+    signal = signal[chunk_begin : chunk_begin + cfg.wlen]
+    amp = np.random.uniform(1.0 - cfg.fact_amp, 1.0 + cfg.fact_amp)
+    signal = signal * amp
+    label = get_label(path, cfg)
+    return signal.reshape((signal.shape[0], 1)), label
 
 
-def get_sample_batch(path_batch, cfg):
-    signal_batch = []
-    label_batch = []
-    for path in path_batch:
-        signal, label = get_sample(path, cfg)
-        signal = get_random_chunk(signal, cfg)
-        signal_batch.append(signal)
-        label_batch.append(label)
-    signal_batch = np.array(signal_batch).reshape((cfg.batch_size, cfg.wlen, 1))
-    label_batch = np.array(label_batch)
-    return signal_batch, label_batch
-
-
-def get_random_batch(cfg):
-    chosen_indexes = np.random.randint(len(cfg.train_list), size=cfg.batch_size)
-    path_batch = np.array(cfg.train_list)[chosen_indexes]
-    return get_sample_batch(path_batch, cfg)
+def sample_reader(cfg):
+    for path in cfg.train_list:
+        yield get_sample(path, cfg)
 
 
 def main():
@@ -83,11 +69,10 @@ def main():
         model.load_weights(cfg.pt_file)
 
     train_dataset = tf.data.Dataset.from_generator(
-        batch_generator, 
+        lambda: sample_reader(cfg), 
         (tf.float64, tf.int64), 
-        (tf.TensorShape([cfg.batch_size, cfg.wlen, 1]), tf.TensorShape([cfg.batch_size, cfg.out_dim])),
-        args=(cfg,)
-    )
+        (tf.TensorShape([cfg.wlen, 1]), tf.TensorShape([cfg.out_dim])),
+    ).shuffle(256).repeat().batch(cfg.batch_size).prefetch(2)
     model.fit(
         train_dataset,
         steps_per_epoch=cfg.N_batches,

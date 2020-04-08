@@ -2,5 +2,5 @@
 max-line-length = 90
 exclude = .git,cfg,data_lists,venv
 inline-quotes = '
-application-import-names = config,data_io,model,sincnet
+application-import-names = config,data_loader,model,sincnet
 import-order-style = pycharm

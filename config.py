@@ -37,6 +37,7 @@ class SincNetCfg:
         # [data]
         self.train_list_file = config.get('data', 'tr_lst')
         self.test_list_file = config.get('data', 'te_lst')
+        self.validation_list_file = config.get('data', 'va_lst')
         self.labels_dict_file = config.get('data', 'lab_dict')
         self.data_folder = config.get('data', 'data_folder') + '/'
         self.output_folder = config.get('data', 'output_folder')
@@ -105,6 +106,9 @@ class SincNetCfg:
         # Loading test list
         self.test_list = self._read_list_file(self.test_list_file)
         self.snt_te = len(self.test_list)
+
+        # Loading validation list
+        self.validation_list = self._read_list_file(self.validation_list_file)
 
         # Loading label dictionary
         self.lab_dict = np.load(self.labels_dict_file, allow_pickle=True).item()

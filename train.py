@@ -38,12 +38,14 @@ def main():
         model.load_weights(cfg.pt_file)
 
     train_dataset = make_dataset(cfg, cfg.train_list, for_train=True)
+    validation_dataset = make_dataset(cfg, cfg.validation_list, for_train=False)
     model.fit(
         train_dataset,
         steps_per_epoch=cfg.N_batches,
         epochs=cfg.N_epochs,
         verbose=1,
         callbacks=callbacks,
+        validation_data=validation_dataset
     )
 
 

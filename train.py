@@ -45,7 +45,8 @@ def main():
         epochs=cfg.N_epochs,
         verbose=1,
         callbacks=callbacks,
-        validation_data=validation_dataset
+        validation_data=validation_dataset,
+        validation_steps=cfg.N_val_batches
     )
 
 

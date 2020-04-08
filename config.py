@@ -84,6 +84,7 @@ class SincNetCfg:
         self.batch_size = config.getint('optimization', 'batch_size')
         self.N_epochs = config.getint('optimization', 'N_epochs')
         self.N_batches = config.getint('optimization', 'N_batches')
+        self.N_val_batches = config.getint('optimization', 'N_val_batches')
         self.N_eval_epoch = config.getint('optimization', 'N_eval_epoch')
         self.seed = config.getint('optimization', 'seed')
 

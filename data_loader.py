@@ -20,7 +20,7 @@ def get_label(cfg, path):
 def get_training_sample(cfg, path):
     full_path = cfg.data_folder + path
     signal = read_wav(full_path)
-    chunk_begin = np.random.randint(signal.shape[0] - cfg.wlen)
+    chunk_begin = np.random.randint(signal.shape[0] - cfg.wlen + 1)
     chunk = signal[chunk_begin : chunk_begin + cfg.wlen]
     amp = np.random.uniform(1.0 - cfg.fact_amp, 1.0 + cfg.fact_amp)
     chunk = chunk * amp
@@ -32,7 +32,7 @@ def get_testing_samples(cfg, path):
     full_path = cfg.data_folder + path
     signal = read_wav(full_path)
     label = get_label(cfg, path)
-    for chunk_begin in range(0, signal.shape[0] - cfg.wlen, cfg.wshift):
+    for chunk_begin in range(0, signal.shape[0] - cfg.wlen + 1, cfg.wshift):
         chunk = signal[chunk_begin : chunk_begin + cfg.wlen]
         yield chunk.reshape((chunk.shape[0], 1)), label
 
@@ -55,5 +55,5 @@ def make_dataset(cfg, path_list, for_train=True):
     )
     if for_train:
         dataset = dataset.shuffle(256).repeat()
-    dataset = dataset.batch(cfg.batch_size).prefetch(10)
+    dataset = dataset.batch(cfg.batch_size)
     return dataset

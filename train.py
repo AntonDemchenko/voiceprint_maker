@@ -13,41 +13,45 @@ from config import read_config
 from sincnet import SincNetModel
 
 
-def batchGenerator(cfg, fact_amp):
+def batch_generator(cfg):
     while True:
-        sig_batch, lab_batch = create_batches_rnd(cfg, fact_amp)
-        yield sig_batch, lab_batch
+        signal_batch, label_batch = get_random_batch(cfg)
+        yield signal_batch, label_batch
 
 
-def create_batches_rnd(cfg, fact_amp):
-    """
-    Initialization of the minibatch
-    (batch_size, [0=>x_t, 1=>x_t+N, 1=>random_samp])
-    """
-    sig_batch = np.zeros([cfg.batch_size, cfg.wlen])
-    lab_batch = []
-    snt_id_arr = np.random.randint(cfg.snt_tr, size=cfg.batch_size)
-    rand_amp_arr = np.random.uniform(
-        1.0 - fact_amp,
-        1 + fact_amp,
-        cfg.batch_size
-    )
-    for i in range(cfg.batch_size):
-        # select a random sentence from the list
-        fname = cfg.data_folder + cfg.train_list[snt_id_arr[i]]
-        with tf.io.gfile.GFile(fname, 'rb') as f:
-            [signal, fs] = sf.read(io.BytesIO(f.read()))
-        # accesing to a random chunk
-        snt_len = signal.shape[0]
-        snt_beg = np.random.randint(snt_len - cfg.wlen - 1)
-        snt_end = snt_beg + cfg.wlen
-        sig_batch[i, :] = signal[snt_beg:snt_end] * rand_amp_arr[i]
-        y = cfg.lab_dict[cfg.train_list[snt_id_arr[i]]]
-        yt = to_categorical(y, num_classes=cfg.out_dim)
-        lab_batch.append(yt)
-    a, b = np.shape(sig_batch)
-    sig_batch = sig_batch.reshape((a, b, 1))
-    return sig_batch, np.array(lab_batch)
+def get_random_chunk(signal, cfg):
+    amp = np.random.uniform(1.0 - cfg.fact_amp, 1.0 + cfg.fact_amp)
+    signal_len = signal.shape[0]
+    begin = np.random.randint(signal_len - cfg.wlen)
+    end = begin + cfg.wlen
+    return signal[begin:end] * amp
+
+
+def get_sample(path, cfg):
+    full_path = cfg.data_folder + path
+    with tf.io.gfile.GFile(full_path, 'rb') as f:
+        [signal, _] = sf.read(io.BytesIO(f.read()))
+    label = to_categorical(cfg.lab_dict[path], num_classes=cfg.out_dim)
+    return signal, label
+
+
+def get_sample_batch(path_batch, cfg):
+    signal_batch = []
+    label_batch = []
+    for path in path_batch:
+        signal, label = get_sample(path, cfg)
+        signal = get_random_chunk(signal, cfg)
+        signal_batch.append(signal)
+        label_batch.append(label)
+    signal_batch = np.array(signal_batch).reshape((cfg.batch_size, cfg.wlen, 1))
+    label_batch = np.array(label_batch)
+    return signal_batch, label_batch
+
+
+def get_random_batch(cfg):
+    chosen_indexes = np.random.randint(len(cfg.train_list), size=cfg.batch_size)
+    path_batch = np.array(cfg.train_list)[chosen_indexes]
+    return get_sample_batch(path_batch, cfg)
 
 
 def main():
@@ -78,9 +82,14 @@ def main():
     if cfg.pt_file != 'none':
         model.load_weights(cfg.pt_file)
 
-    train_generator = batchGenerator(cfg, 0.2)
-    model.fit_generator(
-        train_generator,
+    train_dataset = tf.data.Dataset.from_generator(
+        batch_generator, 
+        (tf.float64, tf.int64), 
+        (tf.TensorShape([cfg.batch_size, cfg.wlen, 1]), tf.TensorShape([cfg.batch_size, cfg.out_dim])),
+        args=(cfg,)
+    )
+    model.fit(
+        train_dataset,
         steps_per_epoch=cfg.N_batches,
         epochs=cfg.N_epochs,
         verbose=1,

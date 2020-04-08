@@ -2,6 +2,7 @@ import os
 
 from tensorflow.keras import backend as K
 from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.optimizers import RMSprop
 
 from config import read_config
@@ -34,7 +35,10 @@ def main():
         period=cfg.N_eval_epoch
     )
 
-    callbacks = [checkpointer]
+    logs_path = os.path.join(cfg.output_folder, 'logs')
+    tensorboard_logger = TensorBoard(logs_path, write_graph=False)
+
+    callbacks = [checkpointer, tensorboard_logger]
 
     if cfg.pt_file != 'none':
         model.load_weights(cfg.pt_file)

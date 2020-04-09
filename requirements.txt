@@ -1,4 +1,5 @@
 keras==2.1.6
 tensorflow==2.1.0
+tensorflow-addons
 tqdm
 pysoundfile

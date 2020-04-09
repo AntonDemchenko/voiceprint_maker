@@ -178,7 +178,8 @@ class SincNetModel(tf.keras.Model):
             self.layer_norm_6 = layers.LayerNormalization(epsilon=1e-6)
         self.leaky_relu_6 = layers.LeakyReLU(alpha=0.2)
 
-        self.prediction = layers.Dense(options.out_dim, activation='softmax')
+        self.dense_7 = layers.Dense(options.out_dim)
+        self.l2_norm = layers.Lambda(lambda x: tf.math.l2_normalize(x, axis=1))
 
     def call(self, inputs):
         # Define your forward pass here,
@@ -229,6 +230,7 @@ class SincNetModel(tf.keras.Model):
             x = self.layer_norm_6(x)
         x = self.leaky_relu_6(x)
 
-        x = self.prediction(x)
+        x = self.dense_7(x)
+        x = self.l2_norm(x)
 
         return x

@@ -1,9 +1,11 @@
 import os
 
+import tensorflow_addons as tfa
 from tensorflow.keras import backend as K
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.optimizers import RMSprop
+from tensorflow.keras.optimizers import Adam
 
 from config import read_config
 from data_loader import make_dataset
@@ -17,11 +19,12 @@ def main():
 
     model = SincNetModel(cfg)
 
-    optimizer = RMSprop(lr=cfg.lr, rho=0.9, epsilon=1e-8)
+    # optimizer = RMSprop(lr=cfg.lr, rho=0.9, epsilon=1e-8)
+    optimizer = Adam(lr=cfg.lr)
     model.compile(
-        loss='categorical_crossentropy',
+        loss=tfa.losses.TripletSemiHardLoss(),
         optimizer=optimizer,
-        metrics=['accuracy']
+        # metrics=['accuracy']
     )
 
     checkpoints_path = os.path.join(cfg.output_folder, 'checkpoints')

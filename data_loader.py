@@ -14,7 +14,8 @@ def read_wav(path):
 
 def get_label(cfg, path):
     label = cfg.lab_dict[path]
-    return to_categorical(label, num_classes=cfg.out_dim)
+    # return to_categorical(label, num_classes=cfg.n_classes)
+    return label
 
 
 def get_training_sample(cfg, path):
@@ -51,7 +52,7 @@ def make_dataset(cfg, path_list, for_train=True):
     dataset = tf.data.Dataset.from_generator(
         get_generator,
         (tf.float64, tf.int64),
-        (tf.TensorShape([cfg.wlen, 1]), tf.TensorShape([cfg.out_dim])),
+        (tf.TensorShape([cfg.wlen, 1]), tf.TensorShape([])),
     )
     if for_train:
         dataset = dataset.shuffle(256).repeat()

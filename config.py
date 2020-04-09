@@ -98,7 +98,8 @@ class SincNetCfg:
         # Initialization of the minibatch (batch_size,[0=>x_t,1=>x_t+N,1=>random_samp])
         # self.sig_batch = np.zeros([self.batch_size, self.wlen])
         # self.lab_batch = np.zeros(self.batch_size)
-        self.out_dim = self.class_lay[0]
+        self.out_dim = 100
+        self.n_classes = self.class_lay[0]
 
         # Loading train list
         self.train_list = self._read_list_file(self.train_list_file)

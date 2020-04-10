@@ -1,4 +1,5 @@
 import os
+import re
 
 from tensorflow.keras import backend as K
 from tensorflow.keras.callbacks import ModelCheckpoint
@@ -15,8 +16,13 @@ def main():
 
     K.clear_session()
 
+    initial_epoch = 0
+
     model = SincNetModelFactory(cfg).create()
     if cfg.pt_file != 'none':
+        match = re.compile(r'SincNet-(\d+)\.hdf5$').search(cfg.pt_file)
+        if match:
+            initial_epoch = int(match.group(1))
         model.load_weights(cfg.pt_file)
 
     optimizer = RMSprop(lr=cfg.lr, rho=0.9, epsilon=1e-8)
@@ -48,6 +54,7 @@ def main():
     model.fit(
         train_dataset,
         steps_per_epoch=cfg.N_batches,
+        initial_epoch=initial_epoch,
         epochs=cfg.N_epochs,
         verbose=1,
         callbacks=callbacks,

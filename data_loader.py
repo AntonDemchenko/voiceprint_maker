@@ -27,7 +27,7 @@ class DataLoader:
     def get_output_shape(self):
         raise NotImplementedError
 
-    def get_training_sample(self, path):
+    def get_train_sample(self, path):
         full_path = self.cfg.data_folder + path
         signal = read_wav(full_path)
         chunk_begin = np.random.randint(signal.shape[0] - self.cfg.wlen + 1)
@@ -37,7 +37,7 @@ class DataLoader:
         label = self.get_label(path)
         yield chunk.reshape((chunk.shape[0], 1)), label
 
-    def get_testing_samples(self, path):
+    def get_test_samples(self, path):
         full_path = self.cfg.data_folder + path
         signal = read_wav(full_path)
         label = self.get_label(path)
@@ -45,20 +45,24 @@ class DataLoader:
             chunk = signal[chunk_begin : chunk_begin + self.cfg.wlen]
             yield chunk.reshape((chunk.shape[0], 1)), label
 
-    def make_dataset(self, path_list, for_train=True):
-        get_samples = self.get_training_sample if for_train else self.get_testing_samples
-
-        def get_generator():
-            return sample_reader(path_list, get_samples)
-
+    def make_train_dataset(self, path_list):
         dataset = tf.data.Dataset.from_generator(
+            lambda: sample_reader(path_list, self.get_train_sample),
             get_generator,
             (tf.float32, tf.int32),
             self.get_output_shape(),
         )
-        if for_train:
-            dataset = dataset.shuffle(1024).repeat()
+        dataset = dataset.shuffle(1024).repeat()
         dataset = dataset.batch(self.cfg.batch_size)
+        return dataset
+
+    def make_test_dataset(self, path_list):
+        dataset = tf.data.Dataset.from_generator(
+            lambda: sample_reader(path_list, self.get_test_samples),
+            (tf.float32, tf.int32),
+            self.get_output_shape(),
+        )
+        dataset = dataset.batch(self.cfg.batch_size_test)
         return dataset
 
 
@@ -90,3 +94,14 @@ class PrintMakerDataLoader(DataLoader):
     def get_label(self, path):
         label = self.cfg.lab_dict[path]
         return label
+
+    def make_test_dataset(self, path_list):
+        samples = list(sample_reader(path_list, self.get_test_samples))
+        np.random.shuffle(samples)
+        dataset = tf.data.Dataset.from_tensor_slices(
+            samples,
+            (tf.float32, tf.int32),
+            self.get_output_shape(),
+        )
+        dataset = dataset.batch(self.cfg.batch_size_test)
+        return dataset

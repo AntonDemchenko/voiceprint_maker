@@ -66,7 +66,6 @@ def main():
         verbose=1,
         callbacks=callbacks,
         validation_data=validation_dataset,
-        validation_steps=cfg.N_val_batches,
         validation_freq=cfg.N_eval_epoch
     )
 

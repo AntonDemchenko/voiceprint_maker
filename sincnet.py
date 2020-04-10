@@ -15,6 +15,15 @@ class SincConv1D(tf.keras.layers.Layer):
 
         super(SincConv1D, self).__init__(**kwargs)
 
+    def get_config(self):
+        config = super().get_config().copy()
+        config.update({
+            'N_filt': self.N_filt,
+            'Filt_dim': self.Filt_dim,
+            'fs': self.fs
+        })
+        return config
+
     def build(self, input_shape):
         # The filters are trainable parameters.
         self.filt_b1 = self.add_weight(

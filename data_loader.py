@@ -12,49 +12,81 @@ def read_wav(path):
         return signal
 
 
-def get_label(cfg, path):
-    label = cfg.lab_dict[path]
-    # return to_categorical(label, num_classes=cfg.n_classes)
-    return label
+def sample_reader(path_list, get_samples):
+    for path in path_list:
+        yield from get_samples(path)
 
 
-def get_training_sample(cfg, path):
-    full_path = cfg.data_folder + path
-    signal = read_wav(full_path)
-    chunk_begin = np.random.randint(signal.shape[0] - cfg.wlen + 1)
-    chunk = signal[chunk_begin : chunk_begin + cfg.wlen]
-    amp = np.random.uniform(1.0 - cfg.fact_amp, 1.0 + cfg.fact_amp)
-    chunk = chunk * amp
-    label = get_label(cfg, path)
-    yield chunk.reshape((chunk.shape[0], 1)), label
+class DataLoader:
+    def __init__(self, cfg):
+        self.cfg = cfg
 
+    def get_label(self, path):
+        raise NotImplementedError
 
-def get_testing_samples(cfg, path):
-    full_path = cfg.data_folder + path
-    signal = read_wav(full_path)
-    label = get_label(cfg, path)
-    for chunk_begin in range(0, signal.shape[0] - cfg.wlen + 1, cfg.wshift):
-        chunk = signal[chunk_begin : chunk_begin + cfg.wlen]
+    def get_output_shape(self):
+        raise NotImplementedError
+
+    def get_training_sample(self, path):
+        full_path = self.cfg.data_folder + path
+        signal = read_wav(full_path)
+        chunk_begin = np.random.randint(signal.shape[0] - self.cfg.wlen + 1)
+        chunk = signal[chunk_begin : chunk_begin + self.cfg.wlen]
+        amp = np.random.uniform(1.0 - self.cfg.fact_amp, 1.0 + self.cfg.fact_amp)
+        chunk = chunk * amp
+        label = self.get_label(path)
         yield chunk.reshape((chunk.shape[0], 1)), label
 
+    def get_testing_samples(self, path):
+        full_path = self.cfg.data_folder + path
+        signal = read_wav(full_path)
+        label = self.get_label(path)
+        for chunk_begin in range(0, signal.shape[0] - self.cfg.wlen + 1, self.cfg.wshift):
+            chunk = signal[chunk_begin : chunk_begin + self.cfg.wlen]
+            yield chunk.reshape((chunk.shape[0], 1)), label
 
-def sample_reader(cfg, path_list, get_samples):
-    for path in path_list:
-        yield from get_samples(cfg, path)
+    def make_dataset(self, path_list, for_train=True):
+        get_samples = self.get_training_sample if for_train else self.get_testing_samples
+
+        def get_generator():
+            return sample_reader(path_list, get_samples)
+
+        dataset = tf.data.Dataset.from_generator(
+            get_generator,
+            (tf.float32, tf.int32),
+            self.get_output_shape(),
+        )
+        if for_train:
+            dataset = dataset.shuffle(1024).repeat()
+        dataset = dataset.batch(self.cfg.batch_size)
+        return dataset
 
 
-def make_dataset(cfg, path_list, for_train=True):
-    get_samples = get_training_sample if for_train else get_testing_samples
+class ClassifierDataLoader(DataLoader):
+    def __init__(self, cfg):
+        super().__init__(cfg)
 
-    def get_generator():
-        return sample_reader(cfg, path_list, get_samples)
+    def get_output_shape(self):
+        return (
+            tf.TensorShape([self.cfg.wlen, 1]),
+            tf.TensorShape([self.cfg.n_classes])
+        )
 
-    dataset = tf.data.Dataset.from_generator(
-        get_generator,
-        (tf.float32, tf.int32),
-        (tf.TensorShape([cfg.wlen, 1]), tf.TensorShape([])),
-    )
-    if for_train:
-        dataset = dataset.shuffle(1024).repeat()
-    dataset = dataset.batch(cfg.batch_size)
-    return dataset
+    def get_label(self, path):
+        label = self.cfg.lab_dict[path]
+        return to_categorical(label, num_classes=self.cfg.n_classes)
+
+
+class PrintMakerDataLoader(DataLoader):
+    def __init__(self, cfg):
+        super().__init__(cfg)
+
+    def get_output_shape(self):
+        return (
+            tf.TensorShape([self.cfg.wlen, 1]),
+            tf.TensorShape([])
+        )
+
+    def get_label(self, path):
+        label = self.cfg.lab_dict[path]
+        return label

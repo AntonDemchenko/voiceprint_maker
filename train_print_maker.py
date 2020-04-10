@@ -9,7 +9,7 @@ from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.optimizers import RMSprop
 
 from config import read_config
-from data_loader import make_dataset
+from data_loader import PrintMakerDataLoader
 from sincnet import SincNetModelFactory
 
 
@@ -56,8 +56,9 @@ def main():
 
     callbacks = [checkpointer, tensorboard_logger]
 
-    train_dataset = make_dataset(cfg, cfg.train_list, for_train=True)
-    validation_dataset = make_dataset(cfg, cfg.validation_list, for_train=False)
+    data_loader = PrintMakerDataLoader(cfg)
+    train_dataset = data_loader.make_dataset(cfg.train_list, for_train=True)
+    validation_dataset = data_loader.make_dataset(cfg.validation_list, for_train=False)
     model.fit(
         train_dataset,
         steps_per_epoch=cfg.N_batches,

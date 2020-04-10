@@ -121,9 +121,8 @@ def sinc(band, t_right):
     return y
 
 
-class SincNetModel(tf.keras.Model):
+class SincNetModelFactory:
     def __init__(self, options):
-        super(SincNetModel, self).__init__(name='SincNetModel')
         self.options = options
 
         self.sinc_1 = SincConv1D(
@@ -178,13 +177,13 @@ class SincNetModel(tf.keras.Model):
             self.layer_norm_6 = layers.LayerNormalization(epsilon=1e-6)
         self.leaky_relu_6 = layers.LeakyReLU(alpha=0.2)
 
-        self.dense_7 = layers.Dense(options.out_dim)
-        self.l2_norm = layers.Lambda(lambda x: tf.math.l2_normalize(x, axis=1))
+        self.prediction = layers.Dense(options.n_classes, activation='softmax')
 
-    def call(self, inputs):
-        # Define your forward pass here,
-        # using layers you previously defined (in `__init__`).
+    def create(self):
+        inputs = layers.Input(self.options.input_shape)
+        
         x = self.sinc_1(inputs)
+        
         x = self.maxpool_1(x)
         if self.options.cnn_use_batchnorm[0]:
             x = self.batch_norm_1(x)
@@ -230,7 +229,7 @@ class SincNetModel(tf.keras.Model):
             x = self.layer_norm_6(x)
         x = self.leaky_relu_6(x)
 
-        x = self.dense_7(x)
-        x = self.l2_norm(x)
+        prediction = self.prediction(x)
 
-        return x
+        model = tf.keras.Model(inputs=inputs, outputs=prediction)
+        return model

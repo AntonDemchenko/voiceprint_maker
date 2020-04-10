@@ -42,6 +42,7 @@ class SincNetCfg:
         self.data_folder = config.get('data', 'data_folder') + '/'
         self.output_folder = config.get('data', 'output_folder')
         self.pt_file = config.get('data', 'pt_file')
+        self.print_maker_pt_file = config.get('data', 'print_maker_pt_file')
 
         # [windowing]
         self.fs = config.getint('windowing', 'fs')
@@ -100,6 +101,7 @@ class SincNetCfg:
         # self.lab_batch = np.zeros(self.batch_size)
         self.out_dim = 100
         self.n_classes = self.class_lay[0]
+        self.input_shape = (self.wlen, 1)
 
         # Loading train list
         self.train_list = self._read_list_file(self.train_list_file)

@@ -51,10 +51,10 @@ def make_dataset(cfg, path_list, for_train=True):
 
     dataset = tf.data.Dataset.from_generator(
         get_generator,
-        (tf.float64, tf.int64),
+        (tf.float32, tf.int32),
         (tf.TensorShape([cfg.wlen, 1]), tf.TensorShape([])),
     )
     if for_train:
-        dataset = dataset.shuffle(256).repeat()
+        dataset = dataset.shuffle(1024).repeat()
     dataset = dataset.batch(cfg.batch_size)
     return dataset

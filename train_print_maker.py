@@ -1,6 +1,9 @@
 import os
 
+import tensorflow as tf
+import tensorflow_addons as tfa
 from tensorflow.keras import backend as K
+from tensorflow.keras import layers
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.optimizers import RMSprop
@@ -10,20 +13,31 @@ from data_loader import make_dataset
 from sincnet import SincNetModelFactory
 
 
+def make_print_maker_from_classifier(cfg, classifier_model_path):
+    classifier = SincNetModelFactory(cfg).create()
+    classifier.load_weights(classifier_model_path)
+    x = classifier.layers[-2].output
+    x = layers.Dense(cfg.out_dim)(x)
+    x = layers.Lambda(lambda x: tf.math.l2_normalize(x, axis=1))(x)
+    print_maker = tf.keras.Model(inputs=classifier.input, outputs=x)
+    for layer in print_maker.layers[:-2]:
+        layer.trainable = False
+    return print_maker
+
+
 def main():
     cfg = read_config()
 
     K.clear_session()
 
-    model = SincNetModelFactory(cfg).create()
-    if cfg.pt_file != 'none':
-        model.load_weights(cfg.pt_file)
+    model = make_print_maker_from_classifier(cfg, cfg.pt_file)
+    if cfg.print_maker_pt_file != 'none':
+        model.load_weights(cfg.print_maker_pt_file)
 
     optimizer = RMSprop(lr=cfg.lr, rho=0.9, epsilon=1e-8)
     model.compile(
-        loss='categorical_crossentropy',
+        loss=tfa.losses.TripletSemiHardLoss(),
         optimizer=optimizer,
-        metrics=['accuracy']
     )
 
     checkpoints_path = os.path.join(cfg.output_folder, 'checkpoints')

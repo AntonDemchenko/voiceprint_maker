@@ -94,7 +94,7 @@ class SincNetCfg:
         self.wshift = int(self.fs * self.cw_shift / 1000.00)
 
         # Batch_dev
-        self.Batch_dev = 128
+        self.batch_size_test = 1024
 
         # Initialization of the minibatch (batch_size,[0=>x_t,1=>x_t+N,1=>random_samp])
         # self.sig_batch = np.zeros([self.batch_size, self.wlen])

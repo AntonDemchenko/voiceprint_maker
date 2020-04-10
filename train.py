@@ -43,8 +43,8 @@ def main():
     callbacks = [checkpointer, tensorboard_logger]
 
     data_loader = ClassifierDataLoader(cfg)
-    train_dataset = data_loader.make_dataset(cfg.train_list, for_train=True)
-    validation_dataset = data_loader.make_dataset(cfg.validation_list, for_train=False)
+    train_dataset = data_loader.make_train_dataset(cfg.train_list)
+    validation_dataset = data_loader.make_test_dataset(cfg.validation_list)
     model.fit(
         train_dataset,
         steps_per_epoch=cfg.N_batches,

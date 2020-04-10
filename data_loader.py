@@ -48,7 +48,6 @@ class DataLoader:
     def make_train_dataset(self, path_list):
         dataset = tf.data.Dataset.from_generator(
             lambda: sample_reader(path_list, self.get_train_sample),
-            get_generator,
             (tf.float32, tf.int32),
             self.get_output_shape(),
         )
@@ -98,10 +97,12 @@ class PrintMakerDataLoader(DataLoader):
     def make_test_dataset(self, path_list):
         samples = list(sample_reader(path_list, self.get_test_samples))
         np.random.shuffle(samples)
+        signal_list = np.array([s[0] for s in samples]).astype(np.float32)
+        label_list = np.array([s[1] for s in samples]).astype(np.int32)
+        signal_tensor = tf.convert_to_tensor(signal_list)
+        label_tensor = tf.convert_to_tensor(label_list)
         dataset = tf.data.Dataset.from_tensor_slices(
-            samples,
-            (tf.float32, tf.int32),
-            self.get_output_shape(),
+            (signal_tensor, label_tensor)
         )
         dataset = dataset.batch(self.cfg.batch_size_test)
         return dataset

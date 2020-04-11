@@ -1,4 +1,5 @@
 import configparser
+import re
 
 import numpy as np
 
@@ -118,6 +119,13 @@ class SincNetCfg:
         self.lab_dict = np.load(self.labels_dict_file, allow_pickle=True).item()
 
         self.fact_amp = 0.2
+
+        self.checkpoint_name = 'SincNet-{epoch:04d}.hdf5'
+
+        self.initial_epoch = 0
+        match = re.compile(r'SincNet-(\d+)\.hdf5$').search(self.pt_file)
+        if match:
+            self.initial_epoch = int(match.group(1))
 
     def _read_list_file(self, list_file):
         list_sig = []

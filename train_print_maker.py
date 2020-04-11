@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import tensorflow as tf
+import tensorflow_addons as tfa
 from tensorflow.keras import backend as K
 from tensorflow.keras.callbacks import CSVLogger
 from tensorflow.keras.callbacks import ModelCheckpoint
@@ -9,8 +10,8 @@ from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.optimizers import RMSprop
 
 from config import read_config
-from data_loader import ClassifierDataLoader
-from sincnet import SincNetClassifierFactory
+from data_loader import PrintMakerDataLoader
+from sincnet import SincNetPrintMakerFactory
 
 
 def main():
@@ -21,15 +22,17 @@ def main():
     np.random.seed(cfg.seed)
     tf.random.set_seed(cfg.seed)
 
-    model = SincNetClassifierFactory(cfg).create()
+    model = SincNetPrintMakerFactory(cfg).create()
     if cfg.pt_file != 'none':
-        model.load_weights(cfg.pt_file)
+        # Skip mismatch enables to load weights of networks with other head
+        model.load_weights(cfg.pt_file, by_name=True, skip_mismatch=True)
+    for layer in model.layers[:-2]:
+        layer.trainable = False
 
     optimizer = RMSprop(lr=cfg.lr, rho=0.9, epsilon=1e-8)
     model.compile(
-        loss='categorical_crossentropy',
+        loss=tfa.losses.TripletSemiHardLoss(),
         optimizer=optimizer,
-        metrics=['accuracy']
     )
 
     checkpoints_path = os.path.join(cfg.output_folder, 'checkpoints')
@@ -43,15 +46,15 @@ def main():
         period=cfg.N_eval_epoch
     )
 
-    csv_path = os.path.join(cfg.output_folder, 'log.csv')
-    csv_logger = CSVLogger(csv_path, append=(cfg.initial_epoch > 0))
-
     logs_path = os.path.join(cfg.output_folder, 'logs')
     tensorboard_logger = TensorBoard(logs_path, write_graph=False)
 
+    csv_path = os.path.join(cfg.output_folder, 'log.csv')
+    csv_logger = CSVLogger(csv_path, append=(cfg.initial_epoch > 0))
+
     callbacks = [checkpointer, tensorboard_logger, csv_logger]
 
-    data_loader = ClassifierDataLoader(cfg)
+    data_loader = PrintMakerDataLoader(cfg)
     train_dataset = data_loader.make_train_dataset(cfg.train_list)
     validation_dataset = data_loader.make_test_dataset(cfg.validation_list)
     model.fit(

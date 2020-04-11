@@ -15,6 +15,15 @@ class SincConv1D(tf.keras.layers.Layer):
 
         super(SincConv1D, self).__init__(**kwargs)
 
+    def get_config(self):
+        config = super().get_config().copy()
+        config.update({
+            'N_filt': self.N_filt,
+            'Filt_dim': self.Filt_dim,
+            'fs': self.fs
+        })
+        return config
+
     def build(self, input_shape):
         # The filters are trainable parameters.
         self.filt_b1 = self.add_weight(
@@ -121,9 +130,8 @@ def sinc(band, t_right):
     return y
 
 
-class SincNetModel(tf.keras.Model):
+class SincNetModelFactory:
     def __init__(self, options):
-        super(SincNetModel, self).__init__(name='SincNetModel')
         self.options = options
 
         self.sinc_1 = SincConv1D(
@@ -178,12 +186,14 @@ class SincNetModel(tf.keras.Model):
             self.layer_norm_6 = layers.LayerNormalization(epsilon=1e-6)
         self.leaky_relu_6 = layers.LeakyReLU(alpha=0.2)
 
-        self.prediction = layers.Dense(options.out_dim, activation='softmax')
+    def get_prediction(self, x):
+        raise NotImplementedError
 
-    def call(self, inputs):
-        # Define your forward pass here,
-        # using layers you previously defined (in `__init__`).
+    def create(self):
+        inputs = layers.Input(self.options.input_shape)
+
         x = self.sinc_1(inputs)
+
         x = self.maxpool_1(x)
         if self.options.cnn_use_batchnorm[0]:
             x = self.batch_norm_1(x)
@@ -229,6 +239,26 @@ class SincNetModel(tf.keras.Model):
             x = self.layer_norm_6(x)
         x = self.leaky_relu_6(x)
 
-        x = self.prediction(x)
+        prediction = self.get_prediction(x)
 
+        model = tf.keras.Model(inputs=inputs, outputs=prediction)
+        return model
+
+
+class SincNetClassifierFactory(SincNetModelFactory):
+    def __init__(self, options):
+        super().__init__(options)
+
+    def get_prediction(self, x):
+        x = layers.Dense(self.options.n_classes, activation='softmax')(x)
+        return x
+
+
+class SincNetPrintMakerFactory(SincNetModelFactory):
+    def __init__(self, options):
+        super().__init__(options)
+
+    def get_prediction(self, x):
+        x = layers.Dense(self.options.out_dim)(x)
+        x = layers.Lambda(lambda x: tf.math.l2_normalize(x, axis=1))(x)
         return x

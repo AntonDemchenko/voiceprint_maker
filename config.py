@@ -1,4 +1,5 @@
 import configparser
+import re
 
 import numpy as np
 
@@ -93,12 +94,14 @@ class SincNetCfg:
         self.wshift = int(self.fs * self.cw_shift / 1000.00)
 
         # Batch_dev
-        self.Batch_dev = 128
+        self.batch_size_test = 1024
 
         # Initialization of the minibatch (batch_size,[0=>x_t,1=>x_t+N,1=>random_samp])
         # self.sig_batch = np.zeros([self.batch_size, self.wlen])
         # self.lab_batch = np.zeros(self.batch_size)
-        self.out_dim = self.class_lay[0]
+        self.out_dim = 100
+        self.n_classes = self.class_lay[0]
+        self.input_shape = (self.wlen, 1)
 
         # Loading train list
         self.train_list = self._read_list_file(self.train_list_file)
@@ -115,6 +118,13 @@ class SincNetCfg:
         self.lab_dict = np.load(self.labels_dict_file, allow_pickle=True).item()
 
         self.fact_amp = 0.2
+
+        self.checkpoint_name = 'SincNet-{epoch:04d}.hdf5'
+
+        self.initial_epoch = 0
+        match = re.compile(r'SincNet-(\d+)\.hdf5$').search(self.pt_file)
+        if match:
+            self.initial_epoch = int(match.group(1))
 
     def _read_list_file(self, list_file):
         list_sig = []

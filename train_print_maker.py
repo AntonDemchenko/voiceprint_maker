@@ -1,5 +1,7 @@
 import os
 
+import numpy as np
+import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow.keras import backend as K
 from tensorflow.keras.callbacks import CSVLogger
@@ -16,6 +18,9 @@ def main():
     cfg = read_config()
 
     K.clear_session()
+
+    np.random.seed(cfg.seed)
+    tf.random.set_seed(cfg.seed)
 
     model = SincNetPrintMakerFactory(cfg).create()
     if cfg.pt_file != 'none':

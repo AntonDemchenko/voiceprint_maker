@@ -1,5 +1,7 @@
 import os
 
+import numpy as np
+import tensorflow as tf
 from tensorflow.keras import backend as K
 from tensorflow.keras.callbacks import CSVLogger
 from tensorflow.keras.callbacks import ModelCheckpoint
@@ -15,6 +17,9 @@ def main():
     cfg = read_config()
 
     K.clear_session()
+
+    np.random.seed(cfg.seed)
+    tf.random.set_seed(cfg.seed)
 
     model = SincNetClassifierFactory(cfg).create()
     if cfg.pt_file != 'none':

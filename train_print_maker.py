@@ -2,6 +2,7 @@ import os
 
 import tensorflow_addons as tfa
 from tensorflow.keras import backend as K
+from tensorflow.keras.callbacks import CSVLogger
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.optimizers import RMSprop
@@ -43,7 +44,10 @@ def main():
     logs_path = os.path.join(cfg.output_folder, 'logs')
     tensorboard_logger = TensorBoard(logs_path, write_graph=False)
 
-    callbacks = [checkpointer, tensorboard_logger]
+    csv_path = os.path.join(cfg.output_folder, 'log.csv')
+    csv_logger = CSVLogger(csv_path, append=(cfg.initial_epoch > 0))
+
+    callbacks = [checkpointer, tensorboard_logger, csv_logger]
 
     data_loader = PrintMakerDataLoader(cfg)
     train_dataset = data_loader.make_train_dataset(cfg.train_list)

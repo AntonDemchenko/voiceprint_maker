@@ -24,26 +24,36 @@ def main():
     all_list = map(lambda f: f[len(dataset_dir) + 1 :], all_list)
     all_list = list(all_list)
 
-    test_fraction = 0.25
-    validation_fraction = 0.15
-    test_list, train_val_list = split(all_list, test_fraction)
-    validation_list, train_list = split(train_val_list, validation_fraction)
+    def get_speaker(path):
+        return path.split('/')[2]
+
+    speaker_to_file_list = dict()
+    for path in all_list:
+        speaker = get_speaker(path)
+        if speaker not in speaker_to_file_list:
+            speaker_to_file_list[speaker] = list()
+        speaker_to_file_list[speaker].append(path)
+
+    for speaker in speaker_to_file_list:
+        np.random.shuffle(speaker_to_file_list[speaker])
+
+    test_list = []
+    validation_list = []
+    train_list = []
+    test_samples_per_speaker = 3
+    val_samples_per_speaker = 1
+    for speaker in speaker_to_file_list:
+        l = speaker_to_file_list[speaker]
+        test_list.extend(l[:test_samples_per_speaker])
+        l = l[test_samples_per_speaker:]
+        validation_list.extend(l[:val_samples_per_speaker])
+        l = l[val_samples_per_speaker:]
+        train_list.extend(l)
 
     save_str_list(all_list_file, all_list)
     save_str_list(test_list_file, test_list)
     save_str_list(train_list_file, train_list)
     save_str_list(validation_list_file, validation_list)
-
-
-def split(source_list, left_fraction):
-    left_list = []
-    right_list = []
-    for path in source_list:
-        if np.random.random() < left_fraction:
-            left_list.append(path)
-        else:
-            right_list.append(path)
-    return left_list, right_list
 
 
 def save_str_list(path, str_list):

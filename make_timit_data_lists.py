@@ -40,7 +40,7 @@ def main():
     test_list = []
     validation_list = []
     train_list = []
-    test_samples_per_speaker = 3
+    test_samples_per_speaker = 2
     val_samples_per_speaker = 1
     for speaker in speaker_to_file_list:
         l = speaker_to_file_list[speaker]

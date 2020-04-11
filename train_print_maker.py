@@ -33,7 +33,7 @@ def main():
     if not os.path.exists(checkpoints_path):
         os.makedirs(checkpoints_path)
     checkpointer = ModelCheckpoint(
-        filepath=os.path.join(checkpoints_path, 'SincNet-{epoch:04d}.hdf5'),
+        filepath=os.path.join(checkpoints_path, cfg.checkpoint_name),
         monitor='val_loss',
         verbose=1,
         save_best_only=True,
@@ -51,6 +51,7 @@ def main():
     model.fit(
         train_dataset,
         steps_per_epoch=cfg.N_batches,
+        initial_epoch=cfg.initial_epoch,
         epochs=cfg.N_epochs,
         verbose=1,
         callbacks=callbacks,

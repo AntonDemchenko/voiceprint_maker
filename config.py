@@ -43,7 +43,6 @@ class SincNetCfg:
         self.data_folder = config.get('data', 'data_folder') + '/'
         self.output_folder = config.get('data', 'output_folder')
         self.pt_file = config.get('data', 'pt_file')
-        self.print_maker_pt_file = config.get('data', 'print_maker_pt_file')
 
         # [windowing]
         self.fs = config.getint('windowing', 'fs')

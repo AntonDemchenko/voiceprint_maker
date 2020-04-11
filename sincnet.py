@@ -186,13 +186,14 @@ class SincNetModelFactory:
             self.layer_norm_6 = layers.LayerNormalization(epsilon=1e-6)
         self.leaky_relu_6 = layers.LeakyReLU(alpha=0.2)
 
-        self.prediction = layers.Dense(options.n_classes, activation='softmax')
+    def get_prediction(self, x):
+        raise NotImplementedError
 
     def create(self):
         inputs = layers.Input(self.options.input_shape)
-        
+
         x = self.sinc_1(inputs)
-        
+
         x = self.maxpool_1(x)
         if self.options.cnn_use_batchnorm[0]:
             x = self.batch_norm_1(x)
@@ -238,7 +239,26 @@ class SincNetModelFactory:
             x = self.layer_norm_6(x)
         x = self.leaky_relu_6(x)
 
-        prediction = self.prediction(x)
+        prediction = self.get_prediction(x)
 
         model = tf.keras.Model(inputs=inputs, outputs=prediction)
         return model
+
+
+class SincNetClassifierFactory(SincNetModelFactory):
+    def __init__(self, options):
+        super().__init__(options)
+
+    def get_prediction(self, x):
+        x = layers.Dense(self.options.n_classes, activation='softmax')(x)
+        return x
+
+
+class SincNetPrintMakerFactory(SincNetModelFactory):
+    def __init__(self, options):
+        super().__init__(options)
+
+    def get_prediction(self, x):
+        x = layers.Dense(self.options.out_dim)(x)
+        x = layers.Lambda(lambda x: tf.math.l2_normalize(x, axis=1))(x)
+        return x

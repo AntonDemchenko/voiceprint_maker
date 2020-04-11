@@ -7,7 +7,7 @@ from tensorflow.keras.optimizers import RMSprop
 
 from config import read_config
 from data_loader import ClassifierDataLoader
-from sincnet import SincNetModelFactory
+from sincnet import SincNetClassifierFactory
 
 
 def main():
@@ -15,7 +15,7 @@ def main():
 
     K.clear_session()
 
-    model = SincNetModelFactory(cfg).create()
+    model = SincNetClassifierFactory(cfg).create()
     if cfg.pt_file != 'none':
         model.load_weights(cfg.pt_file)
 

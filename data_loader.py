@@ -22,6 +22,7 @@ class DataLoader:
         self.cfg = cfg
 
     def make_train_dataset(self, path_list):
+        np.random.shuffle(path_list)
         path_dataset = tf.data.Dataset.from_tensor_slices(path_list)
         wav_dataset = path_dataset\
             .map(self.read_wav)
@@ -39,6 +40,7 @@ class DataLoader:
         )
         signal_label_dataset = tf.data.Dataset\
             .zip((signal_dataset, label_dataset))\
+            .shuffle(1024)\
             .repeat()\
             .batch(self.cfg.batch_size)\
             .prefetch(tf.data.experimental.AUTOTUNE)

@@ -24,21 +24,24 @@ class DataLoader:
     def make_train_dataset(self, path_list):
         path_dataset = tf.data.Dataset.from_tensor_slices(path_list)
         wav_dataset = path_dataset\
-            .map(tf.io.read_file)\
+            .map(self.read_wav)\
             .cache()
         signal_dataset = wav_dataset\
-            .map(tf.audio.decode_wav)\
+            .map(self.decode_wav)\
             .map(self.random_crop)\
             .map(self.random_change_amplitude)\
-            .map(lambda s: tf.reshape(s, [wlen, 1]))
+            .map(self.reshape_signal)
         # dataset = dataset.shuffle(len(path_list))
 
-        label_dataset = dataset\
-            .from_tensor_slices([self.cfg.lab_dict[path] for path in path_list])\
-            .map(lambda l: to_categorical(l, num_classes=self.cfg.n_classes))
+        label_dataset = tf.data.Dataset.from_tensor_slices(
+            [
+                self.label_to_categorical(self.cfg.lab_dict[path])
+                for path in path_list
+            ]
+        )
 
         signal_label_dataset = tf.data.Dataset\
-            .zip(signal_dataset, label_dataset)\
+            .zip((signal_dataset, label_dataset))\
             .repeat()\
             .batch(self.cfg.batch_size)
 
@@ -53,6 +56,15 @@ class DataLoader:
         # dataset = dataset.batch(self.cfg.batch_size)
         # return dataset
 
+    def read_wav(self, path):
+        full_path = tf.strings.join([self.cfg.data_folder, path], separator='/')
+        return tf.io.read_file(full_path)
+
+    def decode_wav(self, wav):
+        signal = tf.audio.decode_wav(wav, desired_channels=1)[0]
+        signal = tf.reshape(signal, [1, -1])
+        return signal[0]
+
     def random_crop(self, signal):
         return tf.image.random_crop(signal, [self.cfg.wlen])
 
@@ -65,8 +77,11 @@ class DataLoader:
         )
         return signal * amp
 
+    def reshape_signal(self, signal):
+        return tf.reshape(signal, [self.cfg.wlen, 1])
+
     def label_to_categorical(self, label):
-        return 
+        return to_categorical(label, num_classes=self.cfg.n_classes)
 
     def make_test_dataset(self, path_list):
         dataset = tf.data.Dataset.from_generator(

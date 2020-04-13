@@ -24,14 +24,10 @@ class DataLoader:
     def make_train_dataset(self, path_list):
         np.random.shuffle(path_list)
         path_dataset = tf.data.Dataset.from_tensor_slices(path_list)
-        wav_dataset = path_dataset\
-            .map(self.read_wav)
-        signal_dataset = wav_dataset\
-            .map(self.decode_wav, tf.data.experimental.AUTOTUNE)\
+        signal_dataset = path_dataset\
+            .map(self.read_signal, tf.data.experimental.AUTOTUNE)\
             .cache()\
-            .map(self.random_crop, tf.data.experimental.AUTOTUNE)\
-            .map(self.random_change_amplitude, tf.data.experimental.AUTOTUNE)\
-            .map(self.reshape_signal, tf.data.experimental.AUTOTUNE)
+            .map(self.random_crop, tf.data.experimental.AUTOTUNE)
         label_dataset = tf.data.Dataset.from_tensor_slices(
             [
                 self.transform_path_to_label(path)
@@ -43,6 +39,10 @@ class DataLoader:
             .shuffle(1024)\
             .repeat()\
             .batch(self.cfg.batch_size)\
+            .map(
+                self.random_change_amplitude_and_reshape_signal,
+                tf.data.experimental.AUTOTUNE
+            )\
             .prefetch(tf.data.experimental.AUTOTUNE)
         return signal_label_dataset
 
@@ -57,6 +57,10 @@ class DataLoader:
             .batch(self.cfg.batch_size_test)
         return dataset
 
+    def read_signal(self, path):
+        wav = self.read_wav(path)
+        return self.decode_wav(wav)
+
     def read_wav(self, path):
         full_path = tf.strings.join([self.cfg.data_folder, path], separator='/')
         return tf.io.read_file(full_path)
@@ -69,17 +73,26 @@ class DataLoader:
     def random_crop(self, signal):
         return tf.image.random_crop(signal, [self.cfg.wlen])
 
-    def random_change_amplitude(self, signal):
+    def random_change_amplitude_and_reshape_signal(self, signal_batch, label_batch):
+        signal_batch, label_batch = self.random_change_amplitude(
+            signal_batch, label_batch
+        )
+        signal_batch, label_batch = self.reshape_signal(signal_batch, label_batch)
+        return signal_batch, label_batch
+
+    def random_change_amplitude(self, signal_batch, label_batch):
         amp = tf.random.uniform(
-            [], 
+            [self.cfg.wlen],
             minval=1.0 - self.cfg.fact_amp,
-            maxval=1.0 + self.cfg.fact_amp, 
+            maxval=1.0 + self.cfg.fact_amp,
             dtype=tf.float32
         )
-        return signal * amp
+        signal_batch *= amp
+        return (signal_batch, label_batch)
 
-    def reshape_signal(self, signal):
-        return tf.reshape(signal, [self.cfg.wlen, 1])
+    def reshape_signal(self, signal_batch, label_batch):
+        signal_batch = tf.reshape(signal_batch, [-1, self.cfg.wlen, 1])
+        return (signal_batch, label_batch)
 
     def label_to_categorical(self, label):
         return to_categorical(label, num_classes=self.cfg.n_classes)
@@ -91,6 +104,12 @@ class DataLoader:
         for chunk_begin in range(0, signal.shape[0] - self.cfg.wlen + 1, self.cfg.wshift):
             chunk = signal[chunk_begin : chunk_begin + self.cfg.wlen]
             yield chunk.reshape((chunk.shape[0], 1)), label
+
+    def transform_path_to_label(self, path):
+        raise NotImplementedError
+
+    def get_output_shape(self):
+        raise NotImplementedError
 
 
 class ClassifierDataLoader(DataLoader):

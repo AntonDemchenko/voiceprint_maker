@@ -39,10 +39,7 @@ class DataLoader:
             .shuffle(1024)\
             .repeat()\
             .batch(self.cfg.batch_size)\
-            .map(
-                self.random_change_amplitude_and_reshape_signal,
-                tf.data.experimental.AUTOTUNE
-            )\
+            .map(self.random_change_amplitude, tf.data.experimental.AUTOTUNE)\
             .prefetch(tf.data.experimental.AUTOTUNE)
         return signal_label_dataset
 
@@ -67,31 +64,20 @@ class DataLoader:
 
     def decode_wav(self, wav):
         signal = tf.audio.decode_wav(wav, desired_channels=1)[0]
-        signal = tf.reshape(signal, [1, -1])
-        return signal[0]
+        signal = tf.slice(signal, [0, 0], [-1, 1])
+        return signal
 
     def random_crop(self, signal):
-        return tf.image.random_crop(signal, [self.cfg.wlen])
-
-    def random_change_amplitude_and_reshape_signal(self, signal_batch, label_batch):
-        signal_batch, label_batch = self.random_change_amplitude(
-            signal_batch, label_batch
-        )
-        signal_batch, label_batch = self.reshape_signal(signal_batch, label_batch)
-        return signal_batch, label_batch
+        return tf.image.random_crop(signal, [self.cfg.wlen, 1])
 
     def random_change_amplitude(self, signal_batch, label_batch):
         amp = tf.random.uniform(
-            [self.cfg.wlen],
+            [self.cfg.wlen, 1],
             minval=1.0 - self.cfg.fact_amp,
             maxval=1.0 + self.cfg.fact_amp,
             dtype=tf.float32
         )
         signal_batch *= amp
-        return (signal_batch, label_batch)
-
-    def reshape_signal(self, signal_batch, label_batch):
-        signal_batch = tf.reshape(signal_batch, [-1, self.cfg.wlen, 1])
         return (signal_batch, label_batch)
 
     def label_to_categorical(self, label):

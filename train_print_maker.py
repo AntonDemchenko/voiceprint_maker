@@ -47,7 +47,7 @@ def main():
     )
 
     logs_path = os.path.join(cfg.output_folder, 'logs')
-    tensorboard_logger = TensorBoard(logs_path, write_graph=False)
+    tensorboard_logger = TensorBoard(logs_path, write_graph=False, profile_batch=0)
 
     csv_path = os.path.join(cfg.output_folder, 'log.csv')
     csv_logger = CSVLogger(csv_path, append=(cfg.initial_epoch > 0))

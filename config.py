@@ -85,16 +85,14 @@ class SincNetCfg:
         self.batch_size = config.getint('optimization', 'batch_size')
         self.N_epochs = config.getint('optimization', 'N_epochs')
         self.N_batches = config.getint('optimization', 'N_batches')
-        self.N_val_batches = config.getint('optimization', 'N_val_batches')
         self.N_eval_epoch = config.getint('optimization', 'N_eval_epoch')
         self.seed = config.getint('optimization', 'seed')
+        self.N_val_windows_per_sample = config.getint('optimization', 'N_val_windows_per_sample')
+        self.batch_size_test = config.getint('optimization', 'batch_size_test')
 
         # Converting context and shift in samples
         self.wlen = int(self.fs * self.cw_len / 1000.00)
         self.wshift = int(self.fs * self.cw_shift / 1000.00)
-
-        # Batch_dev
-        self.batch_size_test = 1024
 
         # Initialization of the minibatch (batch_size,[0=>x_t,1=>x_t+N,1=>random_samp])
         # self.sig_batch = np.zeros([self.batch_size, self.wlen])

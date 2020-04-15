@@ -28,12 +28,7 @@ class DataLoader:
             .map(self.read_signal, tf.data.experimental.AUTOTUNE)\
             .cache()\
             .map(self.random_crop, tf.data.experimental.AUTOTUNE)
-        label_dataset = tf.data.Dataset.from_tensor_slices(
-            [
-                self.transform_path_to_label(path)
-                for path in path_list
-            ]
-        )
+        label_dataset = self.make_label_dataset(path_list)
         signal_label_dataset = tf.data.Dataset\
             .zip((signal_dataset, label_dataset))\
             .shuffle(len(path_list))\
@@ -48,15 +43,10 @@ class DataLoader:
         signal_dataset = path_dataset\
             .map(self.read_signal, tf.data.experimental.AUTOTUNE)\
             .cache()\
-            .repeat(10)\
+            .repeat(self.cfg.N_val_windows_per_sample)\
             .map(self.random_crop, tf.data.experimental.AUTOTUNE)
-        label_dataset = tf.data.Dataset.from_tensor_slices(
-            [
-                self.transform_path_to_label(path)
-                for path in path_list
-            ]
-        )\
-        .repeat(10)
+        label_dataset = self.make_label_dataset(path_list)\
+            .repeat(self.cfg.N_val_windows_per_sample)
         signal_label_dataset = tf.data.Dataset\
             .zip((signal_dataset, label_dataset))\
             .batch(self.cfg.batch_size_test)\
@@ -99,6 +89,14 @@ class DataLoader:
         for chunk_begin in range(0, signal.shape[0] - self.cfg.wlen + 1, self.cfg.wshift):
             chunk = signal[chunk_begin : chunk_begin + self.cfg.wlen]
             yield chunk.reshape((chunk.shape[0], 1)), label
+
+    def make_label_dataset(self, path_list):
+        return tf.data.Dataset.from_tensor_slices(
+            [
+                self.transform_path_to_label(path)
+                for path in path_list
+            ]
+        )
 
     def transform_path_to_label(self, path):
         raise NotImplementedError

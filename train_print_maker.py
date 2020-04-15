@@ -62,7 +62,7 @@ def main():
         steps_per_epoch=cfg.N_batches,
         initial_epoch=cfg.initial_epoch,
         epochs=cfg.N_epochs,
-        verbose=1,
+        verbose=2,
         callbacks=callbacks,
         validation_data=validation_dataset,
         validation_freq=cfg.N_eval_epoch

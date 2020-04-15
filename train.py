@@ -40,7 +40,7 @@ def main():
         monitor='val_loss',
         verbose=1,
         save_best_only=True,
-        period=cfg.N_eval_epoch
+        period=cfg.checkpoint_freq
     )
 
     csv_path = os.path.join(cfg.output_folder, 'log.csv')

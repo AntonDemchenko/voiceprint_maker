@@ -36,7 +36,7 @@ class DataLoader:
         )
         signal_label_dataset = tf.data.Dataset\
             .zip((signal_dataset, label_dataset))\
-            .shuffle(1024)\
+            .shuffle(len(path_list))\
             .repeat()\
             .batch(self.cfg.batch_size)\
             .map(self.random_change_amplitude, tf.data.experimental.AUTOTUNE)\

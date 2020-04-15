@@ -44,15 +44,24 @@ class DataLoader:
         return signal_label_dataset
 
     def make_test_dataset(self, path_list):
-        dataset = tf.data.Dataset\
-            .from_generator(
-                lambda: sample_reader(path_list, self.get_test_samples),
-                (tf.float32, tf.int32),
-                self.get_output_shape(),
-            )\
+        path_dataset = tf.data.Dataset.from_tensor_slices(path_list)
+        signal_dataset = path_dataset\
+            .map(self.read_signal, tf.data.experimental.AUTOTUNE)\
             .cache()\
-            .batch(self.cfg.batch_size_test)
-        return dataset
+            .repeat(10)\
+            .map(self.random_crop, tf.data.experimental.AUTOTUNE)
+        label_dataset = tf.data.Dataset.from_tensor_slices(
+            [
+                self.transform_path_to_label(path)
+                for path in path_list
+            ]
+        )\
+        .repeat(10)
+        signal_label_dataset = tf.data.Dataset\
+            .zip((signal_dataset, label_dataset))\
+            .batch(self.cfg.batch_size_test)\
+            .prefetch(tf.data.experimental.AUTOTUNE)
+        return signal_label_dataset
 
     def read_signal(self, path):
         wav = self.read_wav(path)

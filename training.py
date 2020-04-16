@@ -6,35 +6,19 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.callbacks import CSVLogger
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard
-from tensorflow.keras.optimizers import RMSprop
-
-from config import read_config
-from data_loader import ClassifierDataLoader
-from sincnet import SincNetClassifierFactory
 
 
-def main():
-    cfg = read_config()
-
+def initialize_session(cfg):
     K.clear_session()
-
     np.random.seed(cfg.seed)
     tf.random.set_seed(cfg.seed)
 
-    model = SincNetClassifierFactory(cfg).create()
-    if cfg.pt_file != 'none':
-        model.load_weights(cfg.pt_file)
 
-    optimizer = RMSprop(lr=cfg.lr, rho=0.9, epsilon=1e-8)
-    model.compile(
-        loss='categorical_crossentropy',
-        optimizer=optimizer,
-        metrics=['accuracy']
-    )
-
+def make_callbacks(cfg):
     checkpoints_path = os.path.join(cfg.output_folder, 'checkpoints')
     if not os.path.exists(checkpoints_path):
         os.makedirs(checkpoints_path)
+
     checkpointer = ModelCheckpoint(
         filepath=os.path.join(checkpoints_path, cfg.checkpoint_name),
         monitor='val_loss',
@@ -49,9 +33,12 @@ def main():
     logs_path = os.path.join(cfg.output_folder, 'logs')
     tensorboard_logger = TensorBoard(logs_path, write_graph=False, profile_batch=0)
 
-    callbacks = [checkpointer, tensorboard_logger, csv_logger]
+    return [checkpointer, tensorboard_logger, csv_logger]
 
-    data_loader = ClassifierDataLoader(cfg)
+
+def train(cfg, model, data_loader):
+    callbacks = make_callbacks(cfg)
+
     train_dataset = data_loader.make_train_dataset(cfg.train_list)
     validation_dataset = data_loader.make_test_dataset(cfg.validation_list)
     model.fit(
@@ -64,7 +51,3 @@ def main():
         validation_data=validation_dataset,
         validation_freq=cfg.N_eval_epoch
     )
-
-
-if __name__ == '__main__':
-    main()

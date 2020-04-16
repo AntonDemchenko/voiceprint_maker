@@ -40,14 +40,14 @@ def main():
         monitor='val_loss',
         verbose=1,
         save_best_only=True,
-        period=cfg.N_eval_epoch
+        period=cfg.checkpoint_freq
     )
 
     csv_path = os.path.join(cfg.output_folder, 'log.csv')
     csv_logger = CSVLogger(csv_path, append=(cfg.initial_epoch > 0))
 
     logs_path = os.path.join(cfg.output_folder, 'logs')
-    tensorboard_logger = TensorBoard(logs_path, write_graph=False)
+    tensorboard_logger = TensorBoard(logs_path, write_graph=False, profile_batch=0)
 
     callbacks = [checkpointer, tensorboard_logger, csv_logger]
 
@@ -59,7 +59,7 @@ def main():
         steps_per_epoch=cfg.N_batches,
         initial_epoch=cfg.initial_epoch,
         epochs=cfg.N_epochs,
-        verbose=1,
+        verbose=2,
         callbacks=callbacks,
         validation_data=validation_dataset,
         validation_freq=cfg.N_eval_epoch

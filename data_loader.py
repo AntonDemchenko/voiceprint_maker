@@ -39,19 +39,16 @@ class DataLoader:
         return signal_label_dataset
 
     def make_test_dataset(self, path_list):
-        path_dataset = tf.data.Dataset.from_tensor_slices(path_list)
-        signal_dataset = path_dataset\
-            .map(self.read_signal, tf.data.experimental.AUTOTUNE)\
-            .cache()\
-            .repeat(self.cfg.N_val_windows_per_sample)\
-            .map(self.random_crop, tf.data.experimental.AUTOTUNE)
-        label_dataset = self.make_label_dataset(path_list)\
-            .repeat(self.cfg.N_val_windows_per_sample)
-        signal_label_dataset = tf.data.Dataset\
-            .zip((signal_dataset, label_dataset))\
-            .batch(self.cfg.batch_size_test)\
-            .prefetch(tf.data.experimental.AUTOTUNE)
-        return signal_label_dataset
+        dataset = tf.data.Dataset\
+             .from_generator(
+                 lambda: sample_reader(path_list, self.get_test_samples),
+                 (tf.float32, tf.int32),
+                 self.get_output_shape(),
+             )\
+             .cache()\
+             .batch(self.cfg.batch_size_test)\
+             .prefetch(tf.data.experimental.AUTOTUNE)
+        return dataset
 
     def read_signal(self, path):
         wav = self.read_wav(path)

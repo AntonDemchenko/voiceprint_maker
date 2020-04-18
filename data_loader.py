@@ -69,7 +69,7 @@ class DataLoader:
                 path_batch = []
                 signal_batch = []
         if path_batch:
-            yield np.array(path_batch), tf.convert_to_tensor(signal_batch)t
+            yield np.array(path_batch), tf.convert_to_tensor(signal_batch)
 
     def make_test_chunks(self, signal):
         for chunk_begin in range(0, signal.shape[0] - self.cfg.wlen + 1, self.cfg.wshift):

@@ -38,7 +38,7 @@ class DataLoader:
             .prefetch(tf.data.experimental.AUTOTUNE)
         return signal_label_dataset
 
-    def make_test_dataset(self, path_list):
+    def make_validation_dataset(self, path_list):
         path_dataset = tf.data.Dataset.from_tensor_slices(path_list)
         signal_dataset = path_dataset\
             .map(self.read_signal, tf.data.experimental.AUTOTUNE)\
@@ -52,6 +52,27 @@ class DataLoader:
             .batch(self.cfg.batch_size_test)\
             .prefetch(tf.data.experimental.AUTOTUNE)
         return signal_label_dataset
+
+    def make_test_dataset(self, path_list):
+        def get_test_samples(path_list):
+            for path in path_list:
+                signal = self.read_signal(path)
+                for chunk in self.make_test_chunks(signal):
+                    yield path, chunk
+        dataset = tf.data.Dataset\
+            .from_generator(
+                lambda: get_test_samples(path_list),
+                (tf.string, tf.float32),
+                ([], [self.cfg.wlen, 1])
+            )\
+            .batch(self.cfg.batch_size_test)\
+            .prefetch(tf.data.experimental.AUTOTUNE)
+        return dataset
+
+    def make_test_chunks(self, signal):
+        for chunk_begin in range(0, signal.shape[0] - self.cfg.wlen + 1, self.cfg.wshift):
+            chunk = signal[chunk_begin : chunk_begin + self.cfg.wlen]
+            yield chunk
 
     def read_signal(self, path):
         wav = self.read_wav(path)

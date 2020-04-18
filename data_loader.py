@@ -53,21 +53,23 @@ class DataLoader:
             .prefetch(tf.data.experimental.AUTOTUNE)
         return signal_label_dataset
 
-    def make_test_dataset(self, path_list):
+    def make_test_iterable(self, path_list):
         def get_test_samples(path_list):
             for path in path_list:
                 signal = self.read_signal(path)
                 for chunk in self.make_test_chunks(signal):
                     yield path, chunk
-        dataset = tf.data.Dataset\
-            .from_generator(
-                lambda: get_test_samples(path_list),
-                (tf.string, tf.float32),
-                ([], [self.cfg.wlen, 1])
-            )\
-            .batch(self.cfg.batch_size_test)\
-            .prefetch(tf.data.experimental.AUTOTUNE)
-        return dataset
+        path_batch = []
+        signal_batch = []
+        for path, signal in get_test_samples(path_list):
+            path_batch.append(path)
+            signal_batch.append(signal)
+            if len(path_batch) == self.cfg.batch_size_test:
+                yield np.array(path_batch), tf.convert_to_tensor(signal_batch)
+                path_batch = []
+                signal_batch = []
+        if path_batch:
+            yield np.array(path_batch), tf.convert_to_tensor(signal_batch)t
 
     def make_test_chunks(self, signal):
         for chunk_begin in range(0, signal.shape[0] - self.cfg.wlen + 1, self.cfg.wshift):

@@ -7,12 +7,11 @@ from sincnet import SincNetClassifierFactory
 
 
 def test(cfg, model, data_loader, path_list):
-    dataset = data_loader.make_test_dataset(path_list)
+    dataset = data_loader.make_test_iterable(path_list)
     path_to_prediction_sum = dict()
-    for path_batch, signal_batch in tqdm(dataset.as_numpy_iterator()):
+    for path_batch, signal_batch in tqdm(dataset):
         prediction_batch = model.predict(signal_batch)
         for path, prediction in zip(path_batch, prediction_batch):
-            path = path.decode()
             if path not in path_to_prediction_sum:
                 path_to_prediction_sum[path] = np.zeros([cfg.n_classes])
             path_to_prediction_sum[path] += prediction
@@ -30,6 +29,7 @@ def test(cfg, model, data_loader, path_list):
 def main():
     cfg = read_config()
     model = SincNetClassifierFactory(cfg).create()
+    model.load_weights(cfg.pt_file)
     data_loader = ClassifierDataLoader(cfg)
     accuracy = test(cfg, model, data_loader, cfg.test_list)
     print(accuracy)

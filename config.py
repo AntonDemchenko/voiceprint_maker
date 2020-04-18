@@ -1,4 +1,5 @@
 import configparser
+import os
 import re
 
 import numpy as np
@@ -120,10 +121,7 @@ class SincNetCfg:
 
         self.checkpoint_name = 'SincNet-{epoch:04d}.hdf5'
 
-        self.initial_epoch = 0
-        match = re.compile(r'SincNet-(\d+)\.hdf5$').search(self.pt_file)
-        if match:
-            self.initial_epoch = int(match.group(1))
+        self.initial_epoch = self._get_initial_epoch()
 
     def _read_list_file(self, list_file):
         list_sig = []
@@ -132,6 +130,23 @@ class SincNetCfg:
             for x in lines:
                 list_sig.append(x.rstrip())
         return list_sig
+
+    def _get_initial_epoch(self):
+        result = 0
+        log_path = os.path.join(self.output_folder, 'log.csv')
+        match = re.compile(r'SincNet-(\d+)\.hdf5$').search(self.pt_file)
+        if match:
+            result = int(match.group(1))
+        elif os.path.exists(log_path):
+            s = ''
+            with open(log_path, 'r') as f:
+                for line in f:
+                    s = line.split(',', 1)[0]
+            try:
+                result = int(s) + 1
+            except:
+                pass
+        return result
 
 
 def read_config():

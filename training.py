@@ -24,7 +24,15 @@ def make_callbacks(cfg):
         monitor='val_loss',
         verbose=1,
         save_best_only=True,
+        save_weights_only=True,
         period=cfg.checkpoint_freq
+    )
+
+    last_checkpointer = ModelCheckpoint(
+        filepath=os.path.join(checkpoints_path, 'last_checkpoint.hdf5'),
+        verbose=0,
+        save_weights_only=True,
+        period=1
     )
 
     csv_path = os.path.join(cfg.output_folder, 'log.csv')
@@ -33,7 +41,7 @@ def make_callbacks(cfg):
     logs_path = os.path.join(cfg.output_folder, 'logs')
     tensorboard_logger = TensorBoard(logs_path, write_graph=False, profile_batch=0)
 
-    return [checkpointer, tensorboard_logger, csv_logger]
+    return [checkpointer, last_checkpointer, tensorboard_logger, csv_logger]
 
 
 def train(cfg, model, data_loader):

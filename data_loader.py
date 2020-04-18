@@ -1,20 +1,6 @@
-import io
-
 import numpy as np
-import soundfile as sf
 import tensorflow as tf
 from tensorflow.keras.utils import to_categorical
-
-
-def read_wav(path):
-    with tf.io.gfile.GFile(path, 'rb') as f:
-        signal, _ = sf.read(io.BytesIO(f.read()))
-        return signal
-
-
-def sample_reader(path_list, get_samples):
-    for path in path_list:
-        yield from get_samples(path)
 
 
 class DataLoader:
@@ -134,9 +120,6 @@ class DataLoader:
     def transform_path_to_label(self, path):
         raise NotImplementedError
 
-    def get_output_shape(self):
-        raise NotImplementedError
-
 
 class ClassifierDataLoader(DataLoader):
     def __init__(self, cfg):
@@ -145,12 +128,6 @@ class ClassifierDataLoader(DataLoader):
     def transform_path_to_label(self, path):
         label = self.cfg.lab_dict[path]
         return to_categorical(label, num_classes=self.cfg.n_classes)
-
-    def get_output_shape(self):
-        return (
-            tf.TensorShape([self.cfg.wlen, 1]),
-            tf.TensorShape([self.cfg.n_classes])
-        )
 
 
 class PrintMakerDataLoader(DataLoader):
@@ -161,17 +138,11 @@ class PrintMakerDataLoader(DataLoader):
         label = self.cfg.lab_dict[path]
         return label
 
-    def get_output_shape(self):
-        return (
-            tf.TensorShape([self.cfg.wlen, 1]),
-            tf.TensorShape([])
-        )
-
     def make_test_dataset(self, path_list):
-        samples = list(sample_reader(path_list, self.get_test_samples))
+        samples = list(self.get_test_samples(path_list))
         np.random.shuffle(samples)
-        signal_list = np.array([s[0] for s in samples]).astype(np.float32)
-        label_list = np.array([s[1] for s in samples]).astype(np.int32)
+        signal_list = list([s[0] for s in samples])
+        label_list = list([s[1] for s in samples])
         signal_tensor = tf.convert_to_tensor(signal_list)
         label_tensor = tf.convert_to_tensor(label_list)
         dataset = tf.data.Dataset.from_tensor_slices(

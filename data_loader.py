@@ -1,20 +1,6 @@
-import io
-
 import numpy as np
-import soundfile as sf
 import tensorflow as tf
 from tensorflow.keras.utils import to_categorical
-
-
-def read_wav(path):
-    with tf.io.gfile.GFile(path, 'rb') as f:
-        signal, _ = sf.read(io.BytesIO(f.read()))
-        return signal
-
-
-def sample_reader(path_list, get_samples):
-    for path in path_list:
-        yield from get_samples(path)
 
 
 class DataLoader:
@@ -38,17 +24,62 @@ class DataLoader:
             .prefetch(tf.data.experimental.AUTOTUNE)
         return signal_label_dataset
 
+    def make_validation_dataset(self, path_list):
+        path_dataset = tf.data.Dataset.from_tensor_slices(path_list)
+        signal_dataset = path_dataset\
+            .map(self.read_signal, tf.data.experimental.AUTOTUNE)\
+            .cache()\
+            .repeat(self.cfg.N_val_windows_per_sample)\
+            .map(self.random_crop, tf.data.experimental.AUTOTUNE)
+        label_dataset = self.make_label_dataset(path_list)\
+            .repeat(self.cfg.N_val_windows_per_sample)
+        signal_label_dataset = tf.data.Dataset\
+            .zip((signal_dataset, label_dataset))\
+            .batch(self.cfg.batch_size_test)\
+            .prefetch(tf.data.experimental.AUTOTUNE)
+        return signal_label_dataset
+
+    def make_test_iterable(self, path_list):
+        def get_test_samples(path_list):
+            for path in path_list:
+                signal = self.read_signal(path)
+                for chunk in self.make_test_chunks(signal):
+                    yield path, chunk
+        path_batch = []
+        signal_batch = []
+        for path, signal in get_test_samples(path_list):
+            path_batch.append(path)
+            signal_batch.append(signal)
+            if len(path_batch) == self.cfg.batch_size_test:
+                yield np.array(path_batch), tf.convert_to_tensor(signal_batch)
+                path_batch = []
+                signal_batch = []
+        if path_batch:
+            yield np.array(path_batch), tf.convert_to_tensor(signal_batch)
+
     def make_test_dataset(self, path_list):
         dataset = tf.data.Dataset\
-             .from_generator(
-                 lambda: sample_reader(path_list, self.get_test_samples),
-                 (tf.float32, tf.int32),
-                 self.get_output_shape(),
-             )\
-             .cache()\
-             .batch(self.cfg.batch_size_test)\
-             .prefetch(tf.data.experimental.AUTOTUNE)
+            .from_generator(
+                lambda: self.get_test_samples(path_list),
+                (tf.float32, tf.int32),
+                ([self.cfg.wlen, 1], [self.cfg.n_classes])
+            )\
+            .batch(self.cfg.batch_size_test)\
+            .cache()\
+            .prefetch(tf.data.experimental.AUTOTUNE)
         return dataset
+
+    def get_test_samples(self, path_list):
+        for path in path_list:
+            signal = self.read_signal(path)
+            label = self.transform_path_to_label(path)
+            for chunk in self.make_test_chunks(signal):
+                yield chunk, label
+
+    def make_test_chunks(self, signal):
+        for chunk_begin in range(0, signal.shape[0] - self.cfg.wlen + 1, self.cfg.wshift):
+            chunk = signal[chunk_begin : chunk_begin + self.cfg.wlen]
+            yield chunk
 
     def read_signal(self, path):
         wav = self.read_wav(path)
@@ -79,14 +110,6 @@ class DataLoader:
     def label_to_categorical(self, label):
         return to_categorical(label, num_classes=self.cfg.n_classes)
 
-    def get_test_samples(self, path):
-        full_path = self.cfg.data_folder + path
-        signal = read_wav(full_path)
-        label = self.transform_path_to_label(path)
-        for chunk_begin in range(0, signal.shape[0] - self.cfg.wlen + 1, self.cfg.wshift):
-            chunk = signal[chunk_begin : chunk_begin + self.cfg.wlen]
-            yield chunk.reshape((chunk.shape[0], 1)), label
-
     def make_label_dataset(self, path_list):
         return tf.data.Dataset.from_tensor_slices(
             [
@@ -98,9 +121,6 @@ class DataLoader:
     def transform_path_to_label(self, path):
         raise NotImplementedError
 
-    def get_output_shape(self):
-        raise NotImplementedError
-
 
 class ClassifierDataLoader(DataLoader):
     def __init__(self, cfg):
@@ -109,12 +129,6 @@ class ClassifierDataLoader(DataLoader):
     def transform_path_to_label(self, path):
         label = self.cfg.lab_dict[path]
         return to_categorical(label, num_classes=self.cfg.n_classes)
-
-    def get_output_shape(self):
-        return (
-            tf.TensorShape([self.cfg.wlen, 1]),
-            tf.TensorShape([self.cfg.n_classes])
-        )
 
 
 class PrintMakerDataLoader(DataLoader):
@@ -125,17 +139,11 @@ class PrintMakerDataLoader(DataLoader):
         label = self.cfg.lab_dict[path]
         return label
 
-    def get_output_shape(self):
-        return (
-            tf.TensorShape([self.cfg.wlen, 1]),
-            tf.TensorShape([])
-        )
-
     def make_test_dataset(self, path_list):
-        samples = list(sample_reader(path_list, self.get_test_samples))
+        samples = list(self.get_test_samples(path_list))
         np.random.shuffle(samples)
-        signal_list = np.array([s[0] for s in samples]).astype(np.float32)
-        label_list = np.array([s[1] for s in samples]).astype(np.int32)
+        signal_list = list([s[0] for s in samples])
+        label_list = list([s[1] for s in samples])
         signal_tensor = tf.convert_to_tensor(signal_list)
         label_tensor = tf.convert_to_tensor(label_list)
         dataset = tf.data.Dataset.from_tensor_slices(

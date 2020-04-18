@@ -40,7 +40,7 @@ def train(cfg, model, data_loader):
     callbacks = make_callbacks(cfg)
 
     train_dataset = data_loader.make_train_dataset(cfg.train_list)
-    validation_dataset = data_loader.make_test_dataset(cfg.validation_list)
+    validation_dataset = data_loader.make_validation_dataset(cfg.validation_list)
     model.fit(
         train_dataset,
         steps_per_epoch=cfg.N_batches,

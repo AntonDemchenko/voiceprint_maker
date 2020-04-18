@@ -12,6 +12,7 @@ def test(cfg, model, data_loader, path_list):
     for path_batch, signal_batch in tqdm(dataset.as_numpy_iterator()):
         prediction_batch = model.predict(signal_batch)
         for path, prediction in zip(path_batch, prediction_batch):
+            path = path.decode()
             if path not in path_to_prediction_sum:
                 path_to_prediction_sum[path] = np.zeros([cfg.n_classes])
             path_to_prediction_sum[path] += prediction

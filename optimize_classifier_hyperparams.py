@@ -44,6 +44,9 @@ def main():
         data_loader = ClassifierDataLoader(cfg)
         train(cfg, model, data_loader)
 
+        for layer in model.layers:
+            layer.trainable = False
+
         accuracies = test(cfg, model, data_loader, cfg.validation_list)
 
 

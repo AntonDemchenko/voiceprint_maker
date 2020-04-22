@@ -170,6 +170,10 @@ class SincNetModelFactory:
             layers.LeakyReLU(alpha=0.2)
             for i in range(self.n_conv)
         ]
+        self.cnn_dropout = [
+            layers.Dropout(options.cnn_drop[i])
+            for i in range(self.n_conv)
+        ]
 
         self.flatten = layers.Flatten()
 
@@ -194,6 +198,10 @@ class SincNetModelFactory:
             layers.LeakyReLU(alpha=0.2)
             for i in range(self.n_dense)
         ]
+        self.fc_dropout = [
+            layers.Dropout(options.fc_drop[i])
+            for i in range(self.n_dense)
+        ]
 
     def get_prediction(self, x):
         raise NotImplementedError
@@ -210,6 +218,7 @@ class SincNetModelFactory:
             if self.cnn_layer_norm[i]:
                 x = self.cnn_layer_norm[i](x)
             x = self.cnn_activations[i](x)
+            x = self.cnn_dropout[i](x)
 
         x = self.flatten(x)
 
@@ -220,6 +229,7 @@ class SincNetModelFactory:
             if self.fc_layer_norm[i]:
                 x = self.fc_layer_norm[i](x)
             x = self.fc_activations[i](x)
+            x = self.fc_dropout[i](x)
 
         prediction = self.get_prediction(x)
 

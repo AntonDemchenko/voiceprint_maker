@@ -14,7 +14,7 @@ def main():
     max_iters = 1000
     for _ in range(max_iters):
         options = dict(
-            cnn_act=np.random.choice(['relu', 'leaky_relu']),
+            cnn_act=[np.random.choice(['relu', 'leaky_relu'])] * 3,
             cnn_drop=[np.random.uniform(0.0, 0.4)] * 3,
             cnn_use_laynorm=[np.random.choice([False, True])] * 3,
             cnn_use_laynorm_inp=np.random.choice([False, True]),
@@ -22,7 +22,7 @@ def main():
             cnn_use_batchnorm_inp=np.random.choice([False, True]),
             fc_lay=[np.random.choice([128, 256, 512, 1024, 2048])] * 3,
             fc_drop=[np.random.uniform(0.0, 0.4)] * 3,
-            fc_act=np.random.choice(['relu', 'leaky_relu']),
+            fc_act=[np.random.choice(['relu', 'leaky_relu'])] * 3,
             fc_use_laynorm=[np.random.choice([False, True])] * 3,
             fc_use_laynorm_inp=np.random.choice([False, True]),
             fc_use_batchnorm=[np.random.choice([False, True])] * 3,

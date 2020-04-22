@@ -185,6 +185,14 @@ class SincNetModelFactory:
 
         self.flatten = layers.Flatten()
 
+        self.fc_batch_norm_input = layers.BatchNormalization(momentum=0.05, epsilon=1e-5)\
+            if options.fc_use_batchnorm_inp\
+            else None
+
+        self.fc_layer_norm_input = layers.LayerNormalization(epsilon=1e-6)\
+            if options.fc_use_laynorm_inp\
+            else None
+
         self.n_dense = 3
         self.dense = [
             layers.Dense(options.fc_lay[i])
@@ -234,6 +242,11 @@ class SincNetModelFactory:
             x = self.cnn_dropout[i](x)
 
         x = self.flatten(x)
+
+        if self.fc_batch_norm_input:
+            x = self.fc_batch_norm_input(x)
+        if self.fc_layer_norm_input:
+            x = self.fc_layer_norm_input(x)
 
         for i in range(self.n_dense):
             x = self.dense[i](x)

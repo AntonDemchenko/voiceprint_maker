@@ -1,3 +1,6 @@
+import os
+from uuid import uuid4
+
 import numpy as np
 
 from config import read_config
@@ -11,8 +14,13 @@ from test_classifier import test
 def main():
     cfg = read_config()
 
+    output_folder = cfg.output_folder
+
     max_iters = 1000
     for _ in range(max_iters):
+        uid = str(uuid4())
+        cfg.output_folder = os.path.join(output_folder, uid)
+
         options = dict(
             cnn_act=[np.random.choice(['relu', 'leaky_relu'])] * 3,
             cnn_drop=[np.random.uniform(0.0, 0.4)] * 3,

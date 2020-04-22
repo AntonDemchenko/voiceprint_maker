@@ -29,6 +29,7 @@ def main():
             fc_use_batchnorm_inp=np.random.choice([False, True]),
             class_use_laynorm_inp=np.random.choice([False, True]),
             class_use_batchnorm_inp=np.random.choice([False, True]),
+            optimizer=np.random.choice(['adam', 'rmsprop'])
         )
         cfg.__dict__.update(options)
         model = make_model(cfg)

@@ -134,57 +134,66 @@ class SincNetModelFactory:
     def __init__(self, options):
         self.options = options
 
-        self.sinc_1 = SincConv1D(
+        sinc = SincConv1D(
             options.cnn_N_filt[0], options.cnn_len_filt[0], options.fs
         )
-        self.maxpool_1 = layers.MaxPooling1D(pool_size=options.cnn_max_pool_len[0])
-        if options.cnn_use_batchnorm[0]:
-            self.batch_norm_1 = layers.BatchNormalization(momentum=0.05)
-        if options.cnn_use_laynorm[0]:
-            self.layer_norm_1 = layers.LayerNormalization(epsilon=1e-6)
-        self.leaky_relu_1 = layers.LeakyReLU(alpha=0.2)
 
-        self.conv_2 = layers.Conv1D(
-            options.cnn_N_filt[1], options.cnn_len_filt[1], strides=1, padding='valid'
-        )
-        self.maxpool_2 = layers.MaxPooling1D(pool_size=options.cnn_max_pool_len[1])
-        if options.cnn_use_batchnorm[1]:
-            self.batch_norm_2 = layers.BatchNormalization(momentum=0.05)
-        if options.cnn_use_laynorm[1]:
-            self.layer_norm_2 = layers.LayerNormalization(epsilon=1e-6)
-        self.leaky_relu_2 = layers.LeakyReLU(alpha=0.2)
+        self.n_conv = 3
+        self.conv = [
+            layers.Conv1D(
+                options.cnn_N_filt[i],
+                options.cnn_len_filt[i],
+                strides=1,
+                padding='valid'
+            )
+            if i > 0
+            else sinc
+            for i in range(self.n_conv)
+        ]
+        self.maxpool = [
+            layers.MaxPooling1D(pool_size=options.cnn_max_pool_len[i])
+            for i in range(self.n_conv)
+        ]
+        self.cnn_batch_norm = [
+            layers.BatchNormalization(momentum=0.05)
+            if options.cnn_use_batchnorm[i]
+            else None
+            for i in range(self.n_conv)
+        ]
+        self.cnn_layer_norm = [
+            layers.LayerNormalization(epsilon=1e-6)
+            if options.cnn_use_laynorm[i]
+            else None
+            for i in range(self.n_conv)
+        ]
+        self.cnn_activations = [
+            layers.LeakyReLU(alpha=0.2)
+            for i in range(self.n_conv)
+        ]
 
-        self.conv_3 = layers.Conv1D(
-            options.cnn_N_filt[2], options.cnn_len_filt[2], strides=1, padding='valid'
-        )
-        self.maxpool_3 = layers.MaxPooling1D(pool_size=options.cnn_max_pool_len[2])
-        if options.cnn_use_batchnorm[2]:
-            self.batch_norm_3 = layers.BatchNormalization(momentum=0.05)
-        if options.cnn_use_laynorm[2]:
-            self.layer_norm_3 = layers.LayerNormalization(epsilon=1e-6)
-        self.leaky_relu_3 = layers.LeakyReLU(alpha=0.2)
         self.flatten = layers.Flatten()
 
-        self.dense_4 = layers.Dense(options.fc_lay[0])
-        if options.fc_use_batchnorm[0]:
-            self.batch_norm_4 = layers.BatchNormalization(momentum=0.05, epsilon=1e-5)
-        if options.fc_use_laynorm[0]:
-            self.layer_norm_4 = layers.LayerNormalization(epsilon=1e-6)
-        self.leaky_relu_4 = layers.LeakyReLU(alpha=0.2)
-
-        self.dense_5 = layers.Dense(options.fc_lay[1])
-        if options.fc_use_batchnorm[1]:
-            self.batch_norm_5 = layers.BatchNormalization(momentum=0.05, epsilon=1e-5)
-        if options.fc_use_laynorm[1]:
-            self.layer_norm_5 = layers.LayerNormalization(epsilon=1e-6)
-        self.leaky_relu_5 = layers.LeakyReLU(alpha=0.2)
-
-        self.dense_6 = layers.Dense(options.fc_lay[2])
-        if options.fc_use_batchnorm[2]:
-            self.batch_norm_6 = layers.BatchNormalization(momentum=0.05, epsilon=1e-5)
-        if options.fc_use_laynorm[2]:
-            self.layer_norm_6 = layers.LayerNormalization(epsilon=1e-6)
-        self.leaky_relu_6 = layers.LeakyReLU(alpha=0.2)
+        self.n_dense = 3
+        self.dense = [
+            layers.Dense(options.fc_lay[i])
+            for i in range(self.n_dense)
+        ]
+        self.fc_batch_norm = [
+            layers.BatchNormalization(momentum=0.05, epsilon=1e-5)
+            if options.fc_use_batchnorm[i]
+            else None
+            for i in range(self.n_dense)
+        ]
+        self.fc_layer_norm = [
+            layers.LayerNormalization(epsilon=1e-6)
+            if options.fc_use_laynorm[i]
+            else None
+            for i in range(self.n_dense)
+        ]
+        self.fc_activations = [
+            layers.LeakyReLU(alpha=0.2)
+            for i in range(self.n_dense)
+        ]
 
     def get_prediction(self, x):
         raise NotImplementedError
@@ -192,52 +201,25 @@ class SincNetModelFactory:
     def create(self):
         inputs = layers.Input(self.options.input_shape)
 
-        x = self.sinc_1(inputs)
+        x = inputs
+        for i in range(self.n_conv):
+            x = self.conv[i](x)
+            x = self.maxpool[i](x)
+            if self.cnn_batch_norm[i]:
+                x = self.cnn_batch_norm[i](x)
+            if self.cnn_layer_norm[i]:
+                x = self.cnn_layer_norm[i](x)
+            x = self.cnn_activations[i](x)
 
-        x = self.maxpool_1(x)
-        if self.options.cnn_use_batchnorm[0]:
-            x = self.batch_norm_1(x)
-        if self.options.cnn_use_laynorm[0]:
-            x = self.layer_norm_1(x)
-        x = self.leaky_relu_1(x)
-
-        x = self.conv_2(x)
-        x = self.maxpool_2(x)
-        if self.options.cnn_use_batchnorm[1]:
-            x = self.batch_norm_2(x)
-        if self.options.cnn_use_laynorm[1]:
-            x = self.layer_norm_2(x)
-        x = self.leaky_relu_2(x)
-
-        x = self.conv_3(x)
-        x = self.maxpool_3(x)
-        if self.options.cnn_use_batchnorm[2]:
-            x = self.batch_norm_3(x)
-        if self.options.cnn_use_laynorm[2]:
-            x = self.layer_norm_3(x)
-        x = self.leaky_relu_3(x)
         x = self.flatten(x)
 
-        x = self.dense_4(x)
-        if self.options.fc_use_batchnorm[0]:
-            x = self.batch_norm_4(x)
-        if self.options.fc_use_laynorm[0]:
-            x = self.layer_norm_4(x)
-        x = self.leaky_relu_4(x)
-
-        x = self.dense_5(x)
-        if self.options.fc_use_batchnorm[1]:
-            x = self.batch_norm_5(x)
-        if self.options.fc_use_laynorm[1]:
-            x = self.layer_norm_5(x)
-        x = self.leaky_relu_5(x)
-
-        x = self.dense_6(x)
-        if self.options.fc_use_batchnorm[2]:
-            x = self.batch_norm_6(x)
-        if self.options.fc_use_laynorm[2]:
-            x = self.layer_norm_6(x)
-        x = self.leaky_relu_6(x)
+        for i in range(self.n_dense):
+            x = self.dense[i](x)
+            if self.fc_batch_norm[i]:
+                x = self.fc_batch_norm[i](x)
+            if self.fc_layer_norm[i]:
+                x = self.fc_layer_norm[i](x)
+            x = self.fc_activations[i](x)
 
         prediction = self.get_prediction(x)
 

@@ -223,7 +223,7 @@ class SincNetModelFactory:
         return layers.LayerNormalization(epsilon=1e-6)
 
     def make_batch_norm(self):
-        return layers.BatchNormalization(momentum=0.05, epsilon=1e-5)
+        return layers.BatchNormalization(momentum=0.95, epsilon=1e-5)
 
     def make_activation(self, act):
         if act == 'leaky_relu':

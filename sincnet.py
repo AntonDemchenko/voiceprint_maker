@@ -134,11 +134,11 @@ class SincNetModelFactory:
     def __init__(self, options):
         self.options = options
 
-        self.cnn_batch_norm_input = layers.BatchNormalization(momentum=0.05)\
+        self.cnn_batch_norm_input = self.make_batch_norm()\
             if options.cnn_use_batchnorm_inp\
             else None
 
-        self.cnn_layer_norm_input = layers.LayerNormalization(epsilon=1e-6)\
+        self.cnn_layer_norm_input = self.make_layer_norm()\
             if options.cnn_use_laynorm_inp\
             else None
 
@@ -146,7 +146,7 @@ class SincNetModelFactory:
             options.cnn_N_filt[0], options.cnn_len_filt[0], options.fs
         )
 
-        self.n_conv = 3
+        self.n_conv = len(options.cnn_N_filt)
         self.conv = [
             layers.Conv1D(
                 options.cnn_N_filt[i],
@@ -163,19 +163,19 @@ class SincNetModelFactory:
             for i in range(self.n_conv)
         ]
         self.cnn_batch_norm = [
-            layers.BatchNormalization(momentum=0.05)
+            self.make_batch_norm()
             if options.cnn_use_batchnorm[i]
             else None
             for i in range(self.n_conv)
         ]
         self.cnn_layer_norm = [
-            layers.LayerNormalization(epsilon=1e-6)
+            self.make_layer_norm()
             if options.cnn_use_laynorm[i]
             else None
             for i in range(self.n_conv)
         ]
         self.cnn_activations = [
-            self.get_activation(options.cnn_act[i])
+            self.make_activation(options.cnn_act[i])
             for i in range(self.n_conv)
         ]
         self.cnn_dropout = [
@@ -185,33 +185,33 @@ class SincNetModelFactory:
 
         self.flatten = layers.Flatten()
 
-        self.fc_batch_norm_input = layers.BatchNormalization(momentum=0.05, epsilon=1e-5)\
+        self.fc_batch_norm_input = self.make_batch_norm()\
             if options.fc_use_batchnorm_inp\
             else None
 
-        self.fc_layer_norm_input = layers.LayerNormalization(epsilon=1e-6)\
+        self.fc_layer_norm_input = self.make_layer_norm()\
             if options.fc_use_laynorm_inp\
             else None
 
-        self.n_dense = 3
+        self.n_dense = len(options.fc_lay)
         self.dense = [
             layers.Dense(options.fc_lay[i])
             for i in range(self.n_dense)
         ]
         self.fc_batch_norm = [
-            layers.BatchNormalization(momentum=0.05, epsilon=1e-5)
+            self.make_batch_norm()
             if options.fc_use_batchnorm[i]
             else None
             for i in range(self.n_dense)
         ]
         self.fc_layer_norm = [
-            layers.LayerNormalization(epsilon=1e-6)
+            self.make_layer_norm()
             if options.fc_use_laynorm[i]
             else None
             for i in range(self.n_dense)
         ]
         self.fc_activations = [
-            self.get_activation(options.fc_act[i])
+            self.make_activation(options.fc_act[i])
             for i in range(self.n_dense)
         ]
         self.fc_dropout = [
@@ -219,7 +219,13 @@ class SincNetModelFactory:
             for i in range(self.n_dense)
         ]
 
-    def get_activation(self, act):
+    def make_layer_norm(self):
+        return layers.LayerNormalization(epsilon=1e-6)
+
+    def make_batch_norm(self):
+        return layers.BatchNormalization(momentum=0.05, epsilon=1e-5)
+
+    def make_activation(self, act):
         if act == 'leaky_relu':
             return layers.LeakyReLU(alpha=0.2)
         if act == 'relu':
@@ -273,21 +279,21 @@ class SincNetClassifierFactory(SincNetModelFactory):
     def __init__(self, options):
         super().__init__(options)
 
-        self.class_batch_norm_layer = layers.BatchNormalization(momentum=0.05, epsilon=1e-5)\
+        self.class_batch_norm = self.make_batch_norm()\
             if options.class_use_batchnorm_inp\
             else None
 
-        self.class_layer_norm_layer = layers.LayerNormalization(epsilon=1e-6)\
+        self.class_layer_norm = self.make_layer_norm()\
             if options.class_use_laynorm_inp\
             else None
 
         self.class_layer = layers.Dense(self.options.n_classes, activation='softmax')
 
     def get_prediction(self, x):
-        if self.class_batch_norm_layer:
-            x = self.class_batch_norm_layer(x)
-        if self.class_layer_norm_layer:
-            x = self.class_layer_norm_layer(x)
+        if self.class_batch_norm:
+            x = self.class_batch_norm(x)
+        if self.class_layer_norm:
+            x = self.class_layer_norm(x)
         x = self.class_layer(x)
         return x
 

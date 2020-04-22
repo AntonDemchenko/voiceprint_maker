@@ -1,7 +1,7 @@
+import json
 import os
+import random
 from uuid import uuid4
-
-import numpy as np
 
 from config import read_config
 from data_loader import ClassifierDataLoader
@@ -20,25 +20,31 @@ def main():
     for _ in range(max_iters):
         uid = str(uuid4())
         cfg.output_folder = os.path.join(output_folder, uid)
+        os.makedirs(cfg.output_folder)
 
         options = dict(
-            cnn_act=[np.random.choice(['relu', 'leaky_relu'])] * 3,
-            cnn_drop=[np.random.uniform(0.0, 0.4)] * 3,
-            cnn_use_laynorm=[np.random.choice([False, True])] * 3,
-            cnn_use_laynorm_inp=np.random.choice([False, True]),
-            cnn_use_batchnorm=[np.random.choice([False, True])] * 3,
-            cnn_use_batchnorm_inp=np.random.choice([False, True]),
-            fc_lay=[np.random.choice([128, 256, 512, 1024, 2048])] * 3,
-            fc_drop=[np.random.uniform(0.0, 0.4)] * 3,
-            fc_act=[np.random.choice(['relu', 'leaky_relu'])] * 3,
-            fc_use_laynorm=[np.random.choice([False, True])] * 3,
-            fc_use_laynorm_inp=np.random.choice([False, True]),
-            fc_use_batchnorm=[np.random.choice([False, True])] * 3,
-            fc_use_batchnorm_inp=np.random.choice([False, True]),
-            class_use_laynorm_inp=np.random.choice([False, True]),
-            class_use_batchnorm_inp=np.random.choice([False, True]),
-            optimizer=np.random.choice(['adam', 'rmsprop'])
+            cnn_act=[random.choice(['relu', 'leaky_relu'])] * 3,
+            cnn_drop=[random.uniform(0.0, 0.4)] * 3,
+            cnn_use_laynorm=[random.choice([False, True])] * 3,
+            cnn_use_laynorm_inp=random.choice([False, True]),
+            cnn_use_batchnorm=[random.choice([False, True])] * 3,
+            cnn_use_batchnorm_inp=random.choice([False, True]),
+            fc_lay=[random.choice([128, 256, 512, 1024, 2048])] * 3,
+            fc_drop=[random.uniform(0.0, 0.4)] * 3,
+            fc_act=[random.choice(['relu', 'leaky_relu'])] * 3,
+            fc_use_laynorm=[random.choice([False, True])] * 3,
+            fc_use_laynorm_inp=random.choice([False, True]),
+            fc_use_batchnorm=[random.choice([False, True])] * 3,
+            fc_use_batchnorm_inp=random.choice([False, True]),
+            class_use_laynorm_inp=random.choice([False, True]),
+            class_use_batchnorm_inp=random.choice([False, True]),
+            optimizer=random.choice(['adam', 'rmsprop'])
         )
+
+        with open(os.path.join(cfg.output_folder, 'options.json'), 'w') as f:
+            options_json = json.dumps(options, sort_keys=True, indent=4)
+            print(options_json, file=f)
+
         cfg.__dict__.update(options)
         model = make_model(cfg)
         data_loader = ClassifierDataLoader(cfg)

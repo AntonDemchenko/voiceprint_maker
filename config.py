@@ -78,6 +78,7 @@ class SincNetCfg:
         )
 
         # [optimization]
+        self.optimizer = config.get('optimization', 'optimizer')
         self.lr = config.getfloat('optimization', 'lr')
         self.batch_size = config.getint('optimization', 'batch_size')
         self.N_epochs = config.getint('optimization', 'N_epochs')

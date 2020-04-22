@@ -8,6 +8,19 @@ from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard
 
 
+def make_optimizer(cfg):
+    from tensorflow.keras import optimizers
+
+    if cfg.optimizer == 'rmsprop':
+        return optimizers.RMSprop(learning_rate=cfg.lr, rho=0.95, epsilon=1e-8)
+    if cfg.optimizer == 'adam':
+        return optimizers.Adam(learning_rate=cfg.lr)
+    if cfg.optimizer == 'adagrad':
+        return optimizers.Adagrad(learning_rate=cfg.lr)
+    if cfg.optimizer == 'sgd':
+        return optimizers.SGD(learning_rate=cfg.lr)
+
+
 def initialize_session(cfg):
     K.clear_session()
     np.random.seed(cfg.seed)

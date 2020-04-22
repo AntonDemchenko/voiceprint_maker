@@ -36,6 +36,7 @@ class DataLoader:
         signal_label_dataset = tf.data.Dataset\
             .zip((signal_dataset, label_dataset))\
             .batch(self.cfg.batch_size_test)\
+            .cache()\
             .prefetch(tf.data.experimental.AUTOTUNE)
         return signal_label_dataset
 

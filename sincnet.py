@@ -175,7 +175,7 @@ class SincNetModelFactory:
             for i in range(self.n_conv)
         ]
         self.cnn_activations = [
-            layers.LeakyReLU(alpha=0.2)
+            self.get_activation(options.cnn_act[i])
             for i in range(self.n_conv)
         ]
         self.cnn_dropout = [
@@ -211,13 +211,19 @@ class SincNetModelFactory:
             for i in range(self.n_dense)
         ]
         self.fc_activations = [
-            layers.LeakyReLU(alpha=0.2)
+            self.get_activation(options.fc_act[i])
             for i in range(self.n_dense)
         ]
         self.fc_dropout = [
             layers.Dropout(options.fc_drop[i])
             for i in range(self.n_dense)
         ]
+
+    def get_activation(self, act):
+        if act == 'leaky_relu':
+            return layers.LeakyReLU(alpha=0.2)
+        if act == 'relu':
+            return layers.ReLU()
 
     def get_prediction(self, x):
         raise NotImplementedError

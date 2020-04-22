@@ -134,6 +134,14 @@ class SincNetModelFactory:
     def __init__(self, options):
         self.options = options
 
+        self.cnn_batch_norm_input = layers.BatchNormalization(momentum=0.05)\
+            if options.cnn_use_batchnorm_inp\
+            else None
+
+        self.cnn_layer_norm_input = layers.LayerNormalization(epsilon=1e-6)\
+            if options.cnn_use_laynorm_inp\
+            else None
+
         sinc = SincConv1D(
             options.cnn_N_filt[0], options.cnn_len_filt[0], options.fs
         )
@@ -210,6 +218,11 @@ class SincNetModelFactory:
         inputs = layers.Input(self.options.input_shape)
 
         x = inputs
+        if self.cnn_batch_norm_input:
+            x = self.cnn_batch_norm_input(x)
+        if self.cnn_layer_norm_input:
+            x = self.cnn_layer_norm_input(x)
+
         for i in range(self.n_conv):
             x = self.conv[i](x)
             x = self.maxpool[i](x)

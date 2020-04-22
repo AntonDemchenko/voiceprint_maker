@@ -1,8 +1,7 @@
-from tensorflow.keras.optimizers import RMSprop
-
 from config import read_config
 from data_loader import ClassifierDataLoader
 from sincnet import SincNetClassifierFactory
+from training import make_optimizer
 from training import train
 
 
@@ -10,7 +9,7 @@ def make_model(cfg):
     model = SincNetClassifierFactory(cfg).create()
     if cfg.pt_file != 'none':
         model.load_weights(cfg.pt_file)
-    optimizer = RMSprop(lr=cfg.lr, rho=0.9, epsilon=1e-8)
+    optimizer = make_optimizer(cfg)
     model.compile(
         loss='categorical_crossentropy',
         optimizer=optimizer,

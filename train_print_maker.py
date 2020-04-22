@@ -1,9 +1,9 @@
 import tensorflow_addons as tfa
-from tensorflow.keras.optimizers import RMSprop
 
 from config import read_config
 from data_loader import PrintMakerDataLoader
 from sincnet import SincNetPrintMakerFactory
+from training import make_optimizer
 from training import train
 
 
@@ -15,7 +15,7 @@ def make_model(cfg):
     for layer in model.layers[:-2]:
         layer.trainable = False
 
-    optimizer = RMSprop(lr=cfg.lr, rho=0.9, epsilon=1e-8)
+    optimizer = make_optimizer(cfg)
     model.compile(
         loss=tfa.losses.TripletSemiHardLoss(),
         optimizer=optimizer,

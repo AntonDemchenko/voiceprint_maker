@@ -72,16 +72,13 @@ class SincNetCfg:
 
         # [class]
         self.class_lay = config.getintlist('class', 'class_lay')
-        self.class_drop = config.getfloatlist('class', 'class_drop')
         self.class_use_laynorm_inp = config.getboolean('class', 'class_use_laynorm_inp')
         self.class_use_batchnorm_inp = config.getboolean(
             'class', 'class_use_batchnorm_inp'
         )
-        self.class_use_batchnorm = config.getbooleanlist('class', 'class_use_batchnorm')
-        self.class_use_laynorm = config.getbooleanlist('class', 'class_use_laynorm')
-        self.class_act = config.getlist('class', 'class_act')
 
         # [optimization]
+        self.optimizer = config.get('optimization', 'optimizer')
         self.lr = config.getfloat('optimization', 'lr')
         self.batch_size = config.getint('optimization', 'batch_size')
         self.N_epochs = config.getint('optimization', 'N_epochs')
@@ -137,7 +134,7 @@ class SincNetCfg:
         match = re.compile(r'SincNet-(\d+)\.hdf5$').search(self.pt_file)
         if match:
             result = int(match.group(1))
-        elif os.path.exists(log_path):
+        elif self.pt_file != 'none' and os.path.exists(log_path):
             s = ''
             with open(log_path, 'r') as f:
                 for line in f:

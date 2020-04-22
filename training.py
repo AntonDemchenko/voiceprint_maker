@@ -62,7 +62,7 @@ def train(cfg, model, data_loader):
 
     train_dataset = data_loader.make_train_dataset(cfg.train_list)
     validation_dataset = data_loader.make_validation_dataset(cfg.validation_list)
-    model.fit(
+    result = model.fit(
         train_dataset,
         steps_per_epoch=cfg.N_batches,
         initial_epoch=cfg.initial_epoch,
@@ -72,3 +72,4 @@ def train(cfg, model, data_loader):
         validation_data=validation_dataset,
         validation_freq=cfg.N_eval_epoch
     )
+    return result

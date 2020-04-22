@@ -137,7 +137,7 @@ class SincNetCfg:
         match = re.compile(r'SincNet-(\d+)\.hdf5$').search(self.pt_file)
         if match:
             result = int(match.group(1))
-        elif os.path.exists(log_path):
+        elif self.pt_file != 'none' and os.path.exists(log_path):
             s = ''
             with open(log_path, 'r') as f:
                 for line in f:

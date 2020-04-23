@@ -39,7 +39,17 @@ def save_options(file_path, options):
         print(options_json, file=f)
 
 
+def reduce_repeated_values(options):
+    for key in options:
+        value = options[key]
+        if isinstance(value, list) and all(v == value[0] for v in value):
+            options[key] = value[0]
+    return options
+
+
 def save_tuning_result(file_path, options, accuracies):
+    options = reduce_repeated_values(options)
+
     tuning_result = dict()
     tuning_result.update(options)
     tuning_result.update(accuracies)

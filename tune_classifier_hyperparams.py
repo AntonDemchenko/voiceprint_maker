@@ -68,8 +68,6 @@ def do_tune_step(cfg, output_folder):
     data_loader = ClassifierDataLoader(cfg)
     history = train(cfg, model, data_loader)
 
-    print(history.history.keys())
-
     for layer in model.layers:
         layer.trainable = False
     all_chunks_val_acc, sentence_val_acc = test(

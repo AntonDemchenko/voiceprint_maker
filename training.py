@@ -70,7 +70,8 @@ def make_callbacks(cfg):
 
 
 def train(cfg, model, data_loader, callbacks=[]):
-    callbacks.extend(make_callbacks(cfg))
+    initialize_session(cfg)
+    callbacks = make_callback(cfg) + callbacks
 
     train_dataset = data_loader.make_train_dataset(cfg.train_list)
     validation_dataset = data_loader.make_validation_dataset(cfg.validation_list)

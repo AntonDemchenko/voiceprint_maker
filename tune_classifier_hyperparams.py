@@ -90,7 +90,10 @@ def do_tune_step(cfg, output_folder):
     options_file = os.path.join(cfg.output_folder, 'options.json')
     save_options(options_file, options)
 
+    before = len(cfg.__dict__)
     cfg.__dict__.update(options)
+    assert before == len(cfg.__dict__)
+
     model = make_model(cfg)
     data_loader = ClassifierDataLoader(cfg)
     history = train(cfg, model, data_loader)

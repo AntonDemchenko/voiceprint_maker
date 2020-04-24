@@ -100,15 +100,15 @@ def do_tune_step(cfg, output_folder):
     data_loader = ClassifierDataLoader(cfg)
     history = train(cfg, model, data_loader)
 
-    for layer in model.layers:
-        layer.trainable = False
-    all_chunks_val_acc, sentence_val_acc = test(
-        cfg, model, data_loader, cfg.validation_list
-    )
+    # for layer in model.layers:
+    #     layer.trainable = False
+    # all_chunks_val_acc, sentence_val_acc = test(
+    #     cfg, model, data_loader, cfg.validation_list
+    # )
 
     accuracies = dict(
-        sentence_val_acc=sentence_val_acc,
-        all_chunks_val_acc=all_chunks_val_acc,
+        # sentence_val_acc=sentence_val_acc,
+        # all_chunks_val_acc=all_chunks_val_acc,
         train_acc=history.history['accuracy'][-1],
         val_acc=history.history['val_accuracy'][-1]
     )

@@ -3,3 +3,5 @@ tensorflow==2.1.0
 tensorflow-addons
 tqdm
 pysoundfile
+matplotlib==3.2.1
+pandas==1.0.3

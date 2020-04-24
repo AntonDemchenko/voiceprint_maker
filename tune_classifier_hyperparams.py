@@ -88,13 +88,14 @@ class EarlyStoppingMaxLoss(Callback):
     def __init__(self, max_loss, verbose=0):
         super().__init__()
         self.max_loss = max_loss
+        self.verbose = verbose
 
     def on_epoch_end(self, epoch, logs=None):
         for name in ['loss', 'val_loss']:
             loss = logs.get(name)
             if loss is not None and self.max_loss < loss:
                 self.model.stop_training = True
-                if verbose:
+                if self.verbose:
                     print('Early stopping: {} exceeds max value ({} > {})'\
                         .format(name, loss, self.max_loss)
                     )

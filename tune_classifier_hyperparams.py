@@ -25,13 +25,13 @@ def random_input_norm():
 
 
 def get_random_options():
-    cnn_input_norm = random_input_norm()
+    cnn_input_norm = random.choice([BATCH, None])
     cnn_norm = random_norm()
     fc_input_norm = random_input_norm()
     fc_norm = random_norm()
     class_input_norm = random_input_norm()
     return {
-        'lr': 10 ** random.uniform(-3, -2),
+        'lr': 10 ** random.uniform(-2.15, -2),
         'cnn_act': [random.choice(['relu', 'leaky_relu'])] * 3,
         'cnn_drop': [random.uniform(0.0, 0.4)] * 3,
         'cnn_use_laynorm_inp': (cnn_input_norm == LAYER),

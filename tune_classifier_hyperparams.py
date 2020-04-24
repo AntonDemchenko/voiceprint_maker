@@ -85,8 +85,8 @@ def save_tuning_result(file_path, uid, options, accuracies):
 
 
 def make_early_stopping_callbacks(cfg):
-    from math import log10
-    loss_baseline = 3 * log10(cfg.n_classes)
+    from math import log
+    loss_baseline = 3 * log(cfg.n_classes)
     return [
         EarlyStopping(monitor='loss', baseline=loss_baseline),
         EarlyStopping(monitor='val_loss', baseline=loss_baseline)

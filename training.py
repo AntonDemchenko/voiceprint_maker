@@ -27,30 +27,34 @@ def initialize_session(cfg):
     tf.random.set_seed(cfg.seed)
 
 
-def make_callbacks(cfg):
-    callbacks = []
-
-    checkpoints_path = os.path.join(cfg.output_folder, 'checkpoints')
-    if not os.path.exists(checkpoints_path):
-        os.makedirs(checkpoints_path)
-
-    best_checkpointer = ModelCheckpoint(
-        filepath=os.path.join(checkpoints_path, cfg.checkpoint_name),
+def make_best_checkpointer(cfg):
+    return ModelCheckpoint(
+        filepath=cfg.best_checkpoint_path,
         monitor='val_loss',
         verbose=1,
         save_best_only=True,
         save_weights_only=True,
         period=cfg.best_checkpoint_freq
     )
-    callbacks.append(best_checkpointer)
 
-    last_checkpointer = ModelCheckpoint(
-        filepath=os.path.join(checkpoints_path, 'last_checkpoint.hdf5'),
+
+def make_last_checkpointer(cfg):
+    return ModelCheckpoint(
+        filepath=cfg.last_checkpoint_path,
         verbose=0,
         save_weights_only=True,
         period=1
     )
-    callbacks.append(last_checkpointer)
+
+
+def make_callbacks(cfg):
+    callbacks = []
+
+    if cfg.save_checkpoints:
+        if not os.path.exists(cfg.checkpoint_folder):
+            os.makedirs(cfg.checkpoint_folder)
+        callbacks.append(make_best_checkpointer(cfg))
+        callbacks.append(make_last_checkpointer(cfg))
 
     csv_path = os.path.join(cfg.output_folder, 'log.csv')
     csv_logger = CSVLogger(csv_path, append=(cfg.initial_epoch > 0))

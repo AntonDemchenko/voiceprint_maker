@@ -85,7 +85,7 @@ def save_tuning_result(file_path, uid, options, accuracies):
 
 
 class EarlyStoppingMaxLoss(Callback):
-    def __init__(self, max_loss, verbose=0):
+    def __init__(self, max_loss, verbose=1):
         super().__init__()
         self.max_loss = max_loss
         self.verbose = verbose
@@ -101,13 +101,10 @@ class EarlyStoppingMaxLoss(Callback):
                     )
 
 
-def make_early_stopping_callbacks(cfg):
+def make_early_stopping(cfg):
     from math import log
     max_loss = 3 * log(cfg.n_classes)
-    return [
-        EarlyStoppingMaxLoss(max_loss),
-        EarlyStoppingMaxLoss(max_loss)
-    ]
+    return EarlyStoppingMaxLoss(max_loss)
 
 
 def do_tune_step(cfg, output_folder):
@@ -126,7 +123,7 @@ def do_tune_step(cfg, output_folder):
 
     model = make_model(cfg)
     data_loader = ClassifierDataLoader(cfg)
-    callbacks = make_early_stopping_callbacks(cfg)
+    callbacks = [make_early_stopping(cfg)]
     history = train(cfg, model, data_loader, callbacks)
 
     # for layer in model.layers:

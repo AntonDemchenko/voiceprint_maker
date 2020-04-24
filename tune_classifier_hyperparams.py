@@ -31,6 +31,7 @@ def get_random_options():
     fc_norm = random_norm()
     class_input_norm = random_input_norm()
     return dict(
+        lr=10 ** random.uniform(-3, -2),
         cnn_act=[random.choice(['relu', 'leaky_relu'])] * 3,
         cnn_drop=[random.uniform(0.0, 0.4)] * 3,
         cnn_use_laynorm_inp=(cnn_input_norm == LAYER),

@@ -4,7 +4,7 @@ import os
 import random
 from uuid import uuid4
 
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import Callback
 
 from config import read_config
 from data_loader import ClassifierDataLoader
@@ -84,12 +84,28 @@ def save_tuning_result(file_path, uid, options, accuracies):
         writer.writerow(tuning_result)
 
 
+class EarlyStoppingMaxLoss(Callback):
+    def __init__(self, max_loss, verbose=0):
+        super().__init__()
+        self.max_loss = max_loss
+
+    def on_epoch_end(self, epoch, logs=None):
+        for name in ['loss', 'val_loss']:
+            loss = logs.get(name)
+            if loss is not None and self.max_loss < loss:
+                self.model.stop_training = True
+                if verbose:
+                    print('Early stopping: {} exceeds max value ({} > {})'\
+                        .format(name, loss, self.max_loss)
+                    )
+
+
 def make_early_stopping_callbacks(cfg):
     from math import log
-    loss_baseline = 3 * log(cfg.n_classes)
+    max_loss = 3 * log(cfg.n_classes)
     return [
-        EarlyStopping(monitor='loss', baseline=loss_baseline),
-        EarlyStopping(monitor='val_loss', baseline=loss_baseline)
+        EarlyStoppingMaxLoss(max_loss),
+        EarlyStoppingMaxLoss(max_loss)
     ]
 
 

@@ -65,13 +65,14 @@ def reduce_repeated_values(options):
     return options
 
 
-def save_tuning_result(file_path, options, accuracies):
+def save_tuning_result(file_path, uid, options, accuracies):
     options = reduce_repeated_values(options)
 
     tuning_result = dict()
     tuning_result.update(options)
     tuning_result.update(accuracies)
-    fieldnames = sorted(options) + sorted(accuracies)
+    tuning_result['uid'] = uid
+    fieldnames = ['uid'] + sorted(options) + sorted(accuracies)
 
     is_first_row = not os.path.exists(file_path)
     with open(file_path, 'a') as f:
@@ -113,7 +114,7 @@ def do_tune_step(cfg, output_folder):
     )
 
     tuning_result_file = os.path.join(output_folder, 'tuning_results.csv')
-    save_tuning_result(tuning_result_file, options, accuracies)
+    save_tuning_result(tuning_result_file, uid, options, accuracies)
 
 
 def main():

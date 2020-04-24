@@ -4,6 +4,8 @@ import os
 import random
 from uuid import uuid4
 
+from tensorflow.keras.callbacks import EarlyStopping
+
 from config import read_config
 from data_loader import ClassifierDataLoader
 from sincnet import SincNetClassifierFactory
@@ -82,6 +84,15 @@ def save_tuning_result(file_path, uid, options, accuracies):
         writer.writerow(tuning_result)
 
 
+def make_early_stopping_callbacks(cfg):
+    from math import log10
+    loss_baseline = 3 * log10(cfg.n_classes)
+    return [
+        EarlyStopping(monitor='loss', baseline=loss_baseline),
+        EarlyStopping(monitor='val_loss', baseline=loss_baseline)
+    ]
+
+
 def do_tune_step(cfg, output_folder):
     uid = str(uuid4())
     cfg.output_folder = os.path.join(output_folder, uid)
@@ -98,7 +109,8 @@ def do_tune_step(cfg, output_folder):
 
     model = make_model(cfg)
     data_loader = ClassifierDataLoader(cfg)
-    history = train(cfg, model, data_loader)
+    callbacks = make_early_stopping_callbacks(cfg)
+    history = train(cfg, model, data_loader, callbacks)
 
     # for layer in model.layers:
     #     layer.trainable = False

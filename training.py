@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import backend as K
 from tensorflow.keras.callbacks import CSVLogger
+
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard
 
@@ -68,8 +69,8 @@ def make_callbacks(cfg):
     return callbacks
 
 
-def train(cfg, model, data_loader):
-    callbacks = make_callbacks(cfg)
+def train(cfg, model, data_loader, callbacks=[]):
+    callbacks.extend(make_callbacks(cfg))
 
     train_dataset = data_loader.make_train_dataset(cfg.train_list)
     validation_dataset = data_loader.make_validation_dataset(cfg.validation_list)

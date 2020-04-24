@@ -87,7 +87,10 @@ class SincNetCfg:
         self.seed = config.getint('optimization', 'seed')
         self.N_val_windows_per_sample = config.getint('optimization', 'N_val_windows_per_sample')
         self.batch_size_test = config.getint('optimization', 'batch_size_test')
-        self.checkpoint_freq = config.getint('optimization', 'checkpoint_freq')
+
+        # [callbacks]
+        self.best_checkpoint_freq = config.getint('callbacks', 'best_checkpoint_freq')
+        self.use_tensorboard_logger = config.getboolean('callbacks', 'use_tensorboard_logger')
 
         # Converting context and shift in samples
         self.wlen = int(self.fs * self.cw_len / 1000.00)

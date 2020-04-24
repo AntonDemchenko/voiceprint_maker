@@ -28,18 +28,21 @@ def initialize_session(cfg):
 
 
 def make_callbacks(cfg):
+    callbacks = []
+
     checkpoints_path = os.path.join(cfg.output_folder, 'checkpoints')
     if not os.path.exists(checkpoints_path):
         os.makedirs(checkpoints_path)
 
-    checkpointer = ModelCheckpoint(
+    best_checkpointer = ModelCheckpoint(
         filepath=os.path.join(checkpoints_path, cfg.checkpoint_name),
         monitor='val_loss',
         verbose=1,
         save_best_only=True,
         save_weights_only=True,
-        period=cfg.checkpoint_freq
+        period=cfg.best_checkpoint_freq
     )
+    callbacks.append(best_checkpointer)
 
     last_checkpointer = ModelCheckpoint(
         filepath=os.path.join(checkpoints_path, 'last_checkpoint.hdf5'),
@@ -47,14 +50,18 @@ def make_callbacks(cfg):
         save_weights_only=True,
         period=1
     )
+    callbacks.append(last_checkpointer)
 
     csv_path = os.path.join(cfg.output_folder, 'log.csv')
     csv_logger = CSVLogger(csv_path, append=(cfg.initial_epoch > 0))
+    callbacks.append(csv_logger)
 
-    logs_path = os.path.join(cfg.output_folder, 'logs')
-    tensorboard_logger = TensorBoard(logs_path, write_graph=False, profile_batch=0)
+    if cfg.use_tensorboard_logger:
+        logs_path = os.path.join(cfg.output_folder, 'logs')
+        tensorboard_logger = TensorBoard(logs_path, write_graph=False, profile_batch=0)
+        callbacks.append(tensorboard_logger)
 
-    return [checkpointer, last_checkpointer, tensorboard_logger, csv_logger]
+    return callbacks
 
 
 def train(cfg, model, data_loader):

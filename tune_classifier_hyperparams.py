@@ -33,7 +33,7 @@ def get_random_options():
     fc_norm = random_norm()
     class_input_norm = random_input_norm()
     return {
-        'lr': 10 ** random.uniform(-3, -2.35),
+        'lr': 10 ** random.uniform(-3, -2.5),
         'cnn_act': [random.choice(['relu', 'leaky_relu'])] * 3,
         'cnn_drop': [random.uniform(0.0, 0.25)] * 3,
         'cnn_use_laynorm_inp': (cnn_input_norm == LAYER),
@@ -145,7 +145,7 @@ def main():
     cfg = read_config()
     output_folder = cfg.output_folder
 
-    max_iters = 50
+    max_iters = 5000
     for _ in range(max_iters):
         do_tune_step(cfg, output_folder)
 

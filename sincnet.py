@@ -279,21 +279,9 @@ class SincNetClassifierFactory(SincNetModelFactory):
     def __init__(self, options):
         super().__init__(options)
 
-        self.class_batch_norm = self.make_batch_norm()\
-            if options.class_use_batchnorm_inp\
-            else None
-
-        self.class_layer_norm = self.make_layer_norm()\
-            if options.class_use_laynorm_inp\
-            else None
-
         self.class_layer = layers.Dense(self.options.n_classes, activation='softmax')
 
     def get_prediction(self, x):
-        if self.class_batch_norm:
-            x = self.class_batch_norm(x)
-        if self.class_layer_norm:
-            x = self.class_layer_norm(x)
         x = self.class_layer(x)
         return x
 

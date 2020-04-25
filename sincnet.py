@@ -246,12 +246,12 @@ class SincNetModelFactory:
         for i in range(self.n_conv):
             x = self.conv[i](x)
             x = self.maxpool[i](x)
+            x = self.cnn_activations[i](x)
+            x = self.cnn_dropout[i](x)
             if self.cnn_batch_norm[i]:
                 x = self.cnn_batch_norm[i](x)
             if self.cnn_layer_norm[i]:
                 x = self.cnn_layer_norm[i](x)
-            x = self.cnn_activations[i](x)
-            x = self.cnn_dropout[i](x)
 
         x = self.flatten(x)
 
@@ -262,12 +262,12 @@ class SincNetModelFactory:
 
         for i in range(self.n_dense):
             x = self.dense[i](x)
+            x = self.fc_activations[i](x)
+            x = self.fc_dropout[i](x)
             if self.fc_batch_norm[i]:
                 x = self.fc_batch_norm[i](x)
             if self.fc_layer_norm[i]:
                 x = self.fc_layer_norm[i](x)
-            x = self.fc_activations[i](x)
-            x = self.fc_dropout[i](x)
 
         prediction = self.get_prediction(x)
 

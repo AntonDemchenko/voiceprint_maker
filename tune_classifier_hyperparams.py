@@ -145,7 +145,7 @@ def main():
     cfg = read_config()
     output_folder = cfg.output_folder
 
-    max_iters = 1000
+    max_iters = 50
     for _ in range(max_iters):
         do_tune_step(cfg, output_folder)
 

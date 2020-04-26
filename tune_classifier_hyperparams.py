@@ -47,6 +47,8 @@ def get_random_options():
         'fc_use_batchnorm_inp': (fc_input_norm == BATCH),
         'fc_use_laynorm': [fc_norm == LAYER] * 3,
         'fc_use_batchnorm': [fc_norm == BATCH] * 3,
+        'class_use_laynorm_inp': (class_input_norm == LAYER),
+        'class_use_batchnorm_inp': (class_input_norm == BATCH),
         'optimizer': random.choice(['adam', 'rmsprop'])
     }
 

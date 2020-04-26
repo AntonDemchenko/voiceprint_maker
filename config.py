@@ -72,6 +72,10 @@ class SincNetCfg:
 
         # [class]
         self.class_lay = config.getintlist('class', 'class_lay')
+        self.class_use_laynorm_inp = config.getboolean('class', 'class_use_laynorm_inp')
+        self.class_use_batchnorm_inp = config.getboolean(
+            'class', 'class_use_batchnorm_inp'
+        )
 
         # [optimization]
         self.optimizer = config.get('optimization', 'optimizer')

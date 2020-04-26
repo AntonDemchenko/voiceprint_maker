@@ -33,22 +33,22 @@ def get_random_options():
     fc_norm = random_norm()
     class_input_norm = random_input_norm()
     return {
-        'lr': 10 ** random.uniform(-3, -1),
-        'cnn_act': [random.choice(['relu', 'leaky_relu'])] * 3,
-        'cnn_drop': [random.uniform(0.0, 0.4)] * 3,
         'cnn_use_laynorm_inp': (cnn_input_norm == LAYER),
         'cnn_use_batchnorm_inp': (cnn_input_norm == BATCH),
         'cnn_use_laynorm': [cnn_norm == LAYER] * 3,
         'cnn_use_batchnorm': [cnn_norm == BATCH] * 3,
-        'fc_lay': [random.choice([128, 256, 512, 1024, 2048])] * 3,
-        'fc_drop': [random.uniform(0.0, 0.4)] * 3,
-        'fc_act': [random.choice(['relu', 'leaky_relu'])] * 3,
+        'cnn_act': [random.choice(['relu', 'leaky_relu'])] * 3,
+        'cnn_drop': [random.uniform(0.0, 0.4)] * 3,
         'fc_use_laynorm_inp': (fc_input_norm == LAYER),
         'fc_use_batchnorm_inp': (fc_input_norm == BATCH),
+        'fc_lay': [random.choice([128, 256, 512, 1024, 2048])] * 3,
         'fc_use_laynorm': [fc_norm == LAYER] * 3,
         'fc_use_batchnorm': [fc_norm == BATCH] * 3,
+        'fc_act': [random.choice(['relu', 'leaky_relu'])] * 3,
+        'fc_drop': [random.uniform(0.0, 0.4)] * 3,
         'class_use_laynorm_inp': (class_input_norm == LAYER),
         'class_use_batchnorm_inp': (class_input_norm == BATCH),
+        'lr': 10 ** random.uniform(-3, -1),
         'optimizer': random.choice(['adam', 'rmsprop'])
     }
 

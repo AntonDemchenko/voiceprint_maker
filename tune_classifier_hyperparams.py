@@ -48,7 +48,7 @@ def get_random_options():
         'fc_drop': [random.uniform(0.0, 0.4)] * 3,
         'class_use_laynorm_inp': (class_input_norm == LAYER),
         'class_use_batchnorm_inp': (class_input_norm == BATCH),
-        'lr': 10 ** random.uniform(-3, -1),
+        'lr': 10 ** random.uniform(-3, -2.15),
         'optimizer': random.choice(['adam', 'rmsprop'])
     }
 

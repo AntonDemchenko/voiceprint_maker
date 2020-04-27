@@ -146,6 +146,8 @@ class SincNetModelFactory:
             options.cnn_N_filt[0], options.cnn_len_filt[0], options.fs
         )
 
+        self.abs = layers.Lambda(lambda x: tf.math.abs(x))
+
         self.n_conv = len(options.cnn_N_filt)
         self.conv = [
             layers.Conv1D(
@@ -245,6 +247,8 @@ class SincNetModelFactory:
 
         for i in range(self.n_conv):
             x = self.conv[i](x)
+            if i == 0 and self.cnn_layer_norm[i]:
+                x = self.abs(x)
             x = self.maxpool[i](x)
             if self.cnn_batch_norm[i]:
                 x = self.cnn_batch_norm[i](x)
@@ -278,15 +282,12 @@ class SincNetModelFactory:
 class SincNetClassifierFactory(SincNetModelFactory):
     def __init__(self, options):
         super().__init__(options)
-
         self.class_batch_norm = self.make_batch_norm()\
             if options.class_use_batchnorm_inp\
             else None
-
         self.class_layer_norm = self.make_layer_norm()\
             if options.class_use_laynorm_inp\
             else None
-
         self.class_layer = layers.Dense(self.options.n_classes, activation='softmax')
 
     def get_prediction(self, x):

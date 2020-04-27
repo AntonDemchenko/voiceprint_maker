@@ -38,6 +38,8 @@ def main():
     cfg = read_config()
     model = SincNetClassifierFactory(cfg).create()
     model.load_weights(cfg.pt_file)
+    for layer in model.layers:
+        layer.trainable = False
     data_loader = ClassifierDataLoader(cfg)
     accuracy = test(cfg, model, data_loader, cfg.test_list)
     print(accuracy)

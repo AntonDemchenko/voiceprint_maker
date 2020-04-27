@@ -87,7 +87,15 @@ class SincNetCfg:
         self.seed = config.getint('optimization', 'seed')
         self.N_val_windows_per_sample = config.getint('optimization', 'N_val_windows_per_sample')
         self.batch_size_test = config.getint('optimization', 'batch_size_test')
-        self.checkpoint_freq = config.getint('optimization', 'checkpoint_freq')
+
+        # [callbacks]
+        self.best_checkpoint_freq = config.getint('callbacks', 'best_checkpoint_freq')
+        self.use_tensorboard_logger = config.getboolean('callbacks', 'use_tensorboard_logger')
+        self.save_checkpoints = config.getboolean('callbacks', 'save_checkpoints')
+
+        self.checkpoint_folder = os.path.join(self.output_folder, 'checkpoints')
+        self.best_checkpoint_path = os.path.join(self.checkpoint_folder, 'SincNet-{epoch:04d}.hdf5')
+        self.last_checkpoint_path = os.path.join(self.checkpoint_folder, 'last_checkpoint.hdf5')
 
         # Converting context and shift in samples
         self.wlen = int(self.fs * self.cw_len / 1000.00)
@@ -115,8 +123,6 @@ class SincNetCfg:
         self.lab_dict = np.load(self.labels_dict_file, allow_pickle=True).item()
 
         self.fact_amp = 0.2
-
-        self.checkpoint_name = 'SincNet-{epoch:04d}.hdf5'
 
         self.initial_epoch = self._get_initial_epoch()
 

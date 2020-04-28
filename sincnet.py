@@ -23,13 +23,11 @@ class SincConvFast(layers.Layer):
         sample_rate=16000,
         in_channels=1,
         stride=1,
-        padding=0,
+        padding='valid',
         dilation=1,
         min_low_hz=50,
         min_band_hz=50
     ):
-        super().__init__()
-
         if in_channels != 1:
             raise ValueError('SinConv supports only one input channel')
 
@@ -45,6 +43,8 @@ class SincConvFast(layers.Layer):
         self.sample_rate = sample_rate
         self.min_low_hz = min_low_hz
         self.min_band_hz = min_band_hz
+
+        super().__init__()
 
     def get_config(self):
         config = super().get_config().copy()
@@ -62,6 +62,7 @@ class SincConvFast(layers.Layer):
         return config
 
     def build(self, input_shape):
+        print('BUILD')
         # initialize filterbanks such that they are equally spaced in Mel scale
         low_hz = 30
         high_hz = 0.5 * self.sample_rate - (self.min_low_hz + self.min_band_hz)
@@ -71,12 +72,12 @@ class SincConvFast(layers.Layer):
             to_mel(high_hz),
             self.out_channels + 1
         )
-        hz = self.to_hz(mel)
+        hz = to_hz(mel)
 
         # filter lower frequency (out_channels, in_channels)
         self.low_hz_ = self.add_weight(
             name='low_hz',
-            shape=(self.N_filt,),
+            shape=(self.out_channels, 1),
             initializer='uniform',
             trainable=True
         )
@@ -84,7 +85,7 @@ class SincConvFast(layers.Layer):
         # filter frequency band (out_channels, in_channels)
         self.band_hz_ = self.add_weight(
             name='band_hz',
-            shape=(self.N_filt,),
+            shape=(self.out_channels, 1),
             initializer='uniform',
             trainable=True,
         )
@@ -93,15 +94,16 @@ class SincConvFast(layers.Layer):
             np.diff(hz).reshape([-1, 1])
         ])
 
-        linspace = tf.linspace(
+        linspace = np.linspace(
             0,
-            0.5 * self.kernel_size - 1,
+            self.kernel_size // 2,
             self.kernel_size // 2
         )
-        self.window_ = 0.54 - 0.46 * tf.math.cos(2 * tf.constant(np.pi) * linspace / self.kernel_size)
+        self.window_ = 0.54 - 0.46 * np.cos(2 * np.pi * linspace / self.kernel_size)
 
         n = 0.5 * (self.kernel_size - 1)
-        self.n_ = 2 * tf.constant(np.pi) * tf.range(-n, 0).reshape([1, -1]) / self.sample_rate
+        self.n_ = 2 * np.pi * np.arange(-n, 0).reshape([1, -1]) / self.sample_rate
+        self.n_ = self.n_.astype(np.float32)
 
         super().build(input_shape)
 
@@ -118,24 +120,34 @@ class SincConvFast(layers.Layer):
         f_times_t_high = tf.linalg.matmul(high, self.n_)
 
         band_pass_left = self.window_ * ((tf.sin(f_times_t_high) - tf.sin(f_times_t_low) / (0.5 * self.n_)))
-        band_pass_center = 2 * band.reshape([-1, 1])
-        band_pass_right = tf.reverse(band_pass_left, axis=1)
+        band_pass_center = tf.reshape(2 * band, [-1, 1])
+        print(band_pass_left.shape, band_pass_center.shape)
+        band_pass_right = tf.reverse(band_pass_left, axis=[1])
         band_pass = tf.concat([band_pass_left, band_pass_center, band_pass_right], axis=1)
         band_pass = band_pass / (2 * band[:, None])
 
-        self.filters = band_pass.reshape([
-            self.kernel_size,
-            self.in_channels,
-            self.out_channels,
-        ])
+        self.filters = tf.reshape(
+            band_pass,
+            [self.kernel_size, self.in_channels, self.out_channels]
+        )
 
         return K.conv1d(
             x,
-            kernel=self.filters,
-            stride=self.stride,
-            padding=self.padding,
-            dilations=self.dilation
+            self.filters,
+            self.stride,
+            self.padding,
+            dilation_rate=self.dilation
         )
+
+    def compute_output_shape(self, input_shape):
+        new_size = conv_utils.conv_output_length(
+            input_shape[1],
+            self.kernel_size,
+            padding=self.padding,
+            stride=self.stride,
+            dilation=self.dilation
+        )
+        return (input_shape[0],) + (new_size,) + (self.out_channels,)
 
 
 class SincConv1D(tf.keras.layers.Layer):
@@ -156,6 +168,7 @@ class SincConv1D(tf.keras.layers.Layer):
         return config
 
     def build(self, input_shape):
+        print('BUILD')
         # The filters are trainable parameters.
         self.filt_b1 = self.add_weight(
             name='filt_b1',
@@ -273,8 +286,14 @@ class SincNetModelFactory:
             if options.cnn_use_laynorm_inp\
             else None
 
-        sinc = SincConv1D(
-            options.cnn_N_filt[0], options.cnn_len_filt[0], options.fs
+        # sinc = SincConv1D(
+        #     options.cnn_N_filt[0], options.cnn_len_filt[0], options.fs
+        # )
+
+        sinc = SincConvFast(
+            out_channels=options.cnn_N_filt[0],
+            kernel_size=options.cnn_len_filt[0],
+            sample_rate=options.fs
         )
 
         self.abs = layers.Lambda(lambda x: tf.math.abs(x))
@@ -377,6 +396,8 @@ class SincNetModelFactory:
             x = self.cnn_batch_norm_input(x)
         if self.cnn_layer_norm_input:
             x = self.cnn_layer_norm_input(x)
+
+        self.conv[0].build(self.options.input_shape)
 
         for i in range(self.n_conv_layers):
             x = self.conv[i](x)

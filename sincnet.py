@@ -62,7 +62,6 @@ class SincConvFast(layers.Layer):
         return config
 
     def build(self, input_shape):
-        print('BUILD')
         # initialize filterbanks such that they are equally spaced in Mel scale
         low_hz = 30
         high_hz = 0.5 * self.sample_rate - (self.min_low_hz + self.min_band_hz)
@@ -121,7 +120,6 @@ class SincConvFast(layers.Layer):
 
         band_pass_left = self.window_ * ((tf.sin(f_times_t_high) - tf.sin(f_times_t_low) / (0.5 * self.n_)))
         band_pass_center = tf.reshape(2 * band, [-1, 1])
-        print(band_pass_left.shape, band_pass_center.shape)
         band_pass_right = tf.reverse(band_pass_left, axis=[1])
         band_pass = tf.concat([band_pass_left, band_pass_center, band_pass_right], axis=1)
         band_pass = band_pass / (2 * band[:, None])
@@ -168,7 +166,6 @@ class SincConv1D(tf.keras.layers.Layer):
         return config
 
     def build(self, input_shape):
-        print('BUILD')
         # The filters are trainable parameters.
         self.filt_b1 = self.add_weight(
             name='filt_b1',

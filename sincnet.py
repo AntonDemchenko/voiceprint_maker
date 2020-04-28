@@ -7,6 +7,137 @@ from tensorflow.keras import backend as K
 from tensorflow.keras import layers
 
 
+def to_mel(hz):
+    return 2595 * np.log10(1 + hz / 700)
+
+
+def to_hz(mel):
+    return 700 * (10 ** (mel / 2595) - 1)
+
+
+class SincConvFast(layers.Layer):
+    def __init__(
+        self,
+        out_channels,
+        kernel_size,
+        sample_rate=16000,
+        in_channels=1,
+        stride=1,
+        padding=0,
+        dilation=1,
+        min_low_hz=50,
+        min_band_hz=50
+    ):
+        super().__init__()
+
+        if in_channels != 1:
+            raise ValueError('SinConv supports only one input channel')
+
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = kernel_size
+        if kernel_size % 2 == 0:
+            self.kernel_size = self.kernel_size + 1
+
+        self.stride = stride
+        self.padding = padding
+        self.dilation = dilation
+        self.sample_rate = sample_rate
+        self.min_low_hz = min_low_hz
+        self.min_band_hz = min_band_hz
+
+    def get_config(self):
+        config = super().get_config().copy()
+        config.update({
+            'in_channels': self.in_channels,
+            'out_channels': self.out_channels,
+            'kernel_size': self.kernel_size,
+            'stride': self.stride,
+            'padding': self.padding,
+            'dilation': self.dilation,
+            'sample_rate': self.sample_rate,
+            'min_low_hz': self.min_low_hz,
+            'min_band_hz': self.min_band_hz
+        })
+        return config
+
+    def build(self, input_shape):
+        # initialize filterbanks such that they are equally spaced in Mel scale
+        low_hz = 30
+        high_hz = 0.5 * self.sample_rate - (self.min_low_hz + self.min_band_hz)
+
+        mel = np.linspace(
+            to_mel(low_hz),
+            to_mel(high_hz),
+            self.out_channels + 1
+        )
+        hz = self.to_hz(mel)
+
+        # filter lower frequency (out_channels, in_channels)
+        self.low_hz_ = self.add_weight(
+            name='low_hz',
+            shape=(self.N_filt,),
+            initializer='uniform',
+            trainable=True
+        )
+
+        # filter frequency band (out_channels, in_channels)
+        self.band_hz_ = self.add_weight(
+            name='band_hz',
+            shape=(self.N_filt,),
+            initializer='uniform',
+            trainable=True,
+        )
+        self.set_weights([
+            hz[:-1].reshape([-1, 1]),
+            np.diff(hz).reshape([-1, 1])
+        ])
+
+        linspace = tf.linspace(
+            0,
+            0.5 * self.kernel_size - 1,
+            self.kernel_size // 2
+        )
+        self.window_ = 0.54 - 0.46 * tf.math.cos(2 * tf.constant(np.pi) * linspace / self.kernel_size)
+
+        n = 0.5 * (self.kernel_size - 1)
+        self.n_ = 2 * tf.constant(np.pi) * tf.range(-n, 0).reshape([1, -1]) / self.sample_rate
+
+        super().build(input_shape)
+
+    def __call__(self, x):
+        low = self.min_low_hz + tf.math.abs(self.low_hz_)
+        high = tf.clip_by_value(
+            low + self.min_band_hz + tf.math.abs(self.band_hz_),
+            self.min_low_hz,
+            0.5 * self.sample_rate
+        )
+        band = (high - low)[:, 0]
+
+        f_times_t_low = tf.linalg.matmul(low, self.n_)
+        f_times_t_high = tf.linalg.matmul(high, self.n_)
+
+        band_pass_left = self.window_ * ((tf.sin(f_times_t_high) - tf.sin(f_times_t_low) / (0.5 * self.n_)))
+        band_pass_center = 2 * band.reshape([-1, 1])
+        band_pass_right = tf.reverse(band_pass_left, axis=1)
+        band_pass = tf.concat([band_pass_left, band_pass_center, band_pass_right], axis=1)
+        band_pass = band_pass / (2 * band[:, None])
+
+        self.filters = band_pass.reshape([
+            self.kernel_size,
+            self.in_channels,
+            self.out_channels,
+        ])
+
+        return K.conv1d(
+            x,
+            kernel=self.filters,
+            stride=self.stride,
+            padding=self.padding,
+            dilations=self.dilation
+        )
+
+
 class SincConv1D(tf.keras.layers.Layer):
     def __init__(self, N_filt, Filt_dim, fs, **kwargs):
         self.N_filt = N_filt

@@ -148,41 +148,39 @@ class SincNetModelFactory:
 
         self.abs = layers.Lambda(lambda x: tf.math.abs(x))
 
-        self.n_conv = len(options.cnn_N_filt)
-        self.conv = [
+        self.n_conv_layers = len(options.cnn_N_filt)
+        self.conv = [sinc] + [
             layers.Conv1D(
                 options.cnn_N_filt[i],
                 options.cnn_len_filt[i],
                 strides=1,
                 padding='valid'
             )
-            if i > 0
-            else sinc
-            for i in range(self.n_conv)
+            for i in range(1, self.n_conv_layers)
         ]
         self.maxpool = [
             layers.MaxPooling1D(pool_size=options.cnn_max_pool_len[i])
-            for i in range(self.n_conv)
+            for i in range(self.n_conv_layers)
         ]
         self.cnn_batch_norm = [
             self.make_batch_norm()
             if options.cnn_use_batchnorm[i]
             else None
-            for i in range(self.n_conv)
+            for i in range(self.n_conv_layers)
         ]
         self.cnn_layer_norm = [
             self.make_layer_norm()
             if options.cnn_use_laynorm[i]
             else None
-            for i in range(self.n_conv)
+            for i in range(self.n_conv_layers)
         ]
         self.cnn_activations = [
             self.make_activation(options.cnn_act[i])
-            for i in range(self.n_conv)
+            for i in range(self.n_conv_layers)
         ]
         self.cnn_dropout = [
             layers.Dropout(options.cnn_drop[i])
-            for i in range(self.n_conv)
+            for i in range(self.n_conv_layers)
         ]
 
         self.flatten = layers.Flatten()
@@ -195,30 +193,30 @@ class SincNetModelFactory:
             if options.fc_use_laynorm_inp\
             else None
 
-        self.n_dense = len(options.fc_lay)
+        self.n_dense_layers = len(options.fc_lay)
         self.dense = [
             layers.Dense(options.fc_lay[i])
-            for i in range(self.n_dense)
+            for i in range(self.n_dense_layers)
         ]
         self.fc_batch_norm = [
             self.make_batch_norm()
             if options.fc_use_batchnorm[i]
             else None
-            for i in range(self.n_dense)
+            for i in range(self.n_dense_layers)
         ]
         self.fc_layer_norm = [
             self.make_layer_norm()
             if options.fc_use_laynorm[i]
             else None
-            for i in range(self.n_dense)
+            for i in range(self.n_dense_layers)
         ]
         self.fc_activations = [
             self.make_activation(options.fc_act[i])
-            for i in range(self.n_dense)
+            for i in range(self.n_dense_layers)
         ]
         self.fc_dropout = [
             layers.Dropout(options.fc_drop[i])
-            for i in range(self.n_dense)
+            for i in range(self.n_dense_layers)
         ]
 
     def make_layer_norm(self):
@@ -245,7 +243,7 @@ class SincNetModelFactory:
         if self.cnn_layer_norm_input:
             x = self.cnn_layer_norm_input(x)
 
-        for i in range(self.n_conv):
+        for i in range(self.n_conv_layers):
             x = self.conv[i](x)
             if i == 0 and self.cnn_layer_norm[i]:
                 x = self.abs(x)
@@ -264,7 +262,7 @@ class SincNetModelFactory:
         if self.fc_layer_norm_input:
             x = self.fc_layer_norm_input(x)
 
-        for i in range(self.n_dense):
+        for i in range(self.n_dense_layers):
             x = self.dense[i](x)
             if self.fc_batch_norm[i]:
                 x = self.fc_batch_norm[i](x)

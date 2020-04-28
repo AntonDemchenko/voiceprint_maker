@@ -180,6 +180,8 @@ class SincNetModelFactory:
         ]
         self.cnn_dropout = [
             layers.Dropout(options.cnn_drop[i])
+            if not np.isclose(options.cnn_drop[i], 0)
+            else None
             for i in range(self.n_conv_layers)
         ]
 
@@ -216,6 +218,8 @@ class SincNetModelFactory:
         ]
         self.fc_dropout = [
             layers.Dropout(options.fc_drop[i])
+            if not np.isclose(options.fc_drop[i], 0)
+            else None
             for i in range(self.n_dense_layers)
         ]
 
@@ -253,7 +257,8 @@ class SincNetModelFactory:
             if self.cnn_layer_norm[i]:
                 x = self.cnn_layer_norm[i](x)
             x = self.cnn_activations[i](x)
-            x = self.cnn_dropout[i](x)
+            if self.cnn_dropout[i]:
+                x = self.cnn_dropout[i](x)
 
         x = self.flatten(x)
 
@@ -269,7 +274,8 @@ class SincNetModelFactory:
             if self.fc_layer_norm[i]:
                 x = self.fc_layer_norm[i](x)
             x = self.fc_activations[i](x)
-            x = self.fc_dropout[i](x)
+            if self.fc_dropout[i]:
+                x = self.fc_dropout[i](x)
 
         prediction = self.get_prediction(x)
 

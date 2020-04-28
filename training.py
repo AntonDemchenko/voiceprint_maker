@@ -31,7 +31,7 @@ def initialize_session(cfg):
 def make_best_checkpointer(cfg):
     return ModelCheckpoint(
         filepath=cfg.best_checkpoint_path,
-        monitor='val_loss',
+        monitor='val_accuracy',
         verbose=1,
         save_best_only=True,
         save_weights_only=True,

@@ -94,7 +94,7 @@ class SincNetCfg:
         self.save_checkpoints = config.getboolean('callbacks', 'save_checkpoints')
 
         self.checkpoint_folder = os.path.join(self.output_folder, 'checkpoints')
-        self.best_checkpoint_path = os.path.join(self.checkpoint_folder, 'SincNet-{epoch:04d}.hdf5')
+        self.best_checkpoint_path = os.path.join(self.checkpoint_folder, 'best_checkpoint.hdf5')
         self.last_checkpoint_path = os.path.join(self.checkpoint_folder, 'last_checkpoint.hdf5')
 
         # Converting context and shift in samples

@@ -15,7 +15,7 @@ def main():
 
     all_list_file = os.path.join(output_dir, '{}_all.scp'.format(dataset_name))
     train_list_file = os.path.join(output_dir, '{}_train.scp'.format(dataset_name))
-    validation_list_file = os.path.join(output_dir, '{}_validation.scp'.format(dataset_name))
+    val_list_file = os.path.join(output_dir, '{}_validation.scp'.format(dataset_name))
     test_list_file = os.path.join(output_dir, '{}_test.scp'.format(dataset_name))
 
     pattern = '{}/**/*.wav'.format(dataset_dir)
@@ -27,12 +27,12 @@ def main():
     test_fraction = 0.25
     validation_fraction = 0.15
     test_list, train_val_list = split(all_list, test_fraction)
-    validation_list, train_list = split(train_val_list, validation_fraction)
+    val_list, train_list = split(train_val_list, validation_fraction)
 
     save_str_list(all_list_file, all_list)
     save_str_list(test_list_file, test_list)
     save_str_list(train_list_file, train_list)
-    save_str_list(validation_list_file, validation_list)
+    save_str_list(val_list_file, val_list)
 
 
 def split(source_list, left_fraction):

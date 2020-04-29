@@ -7,8 +7,8 @@ from training import train
 
 def make_model(cfg):
     model = SincNetClassifierFactory(cfg).create()
-    if cfg.pt_file != 'none':
-        model.load_weights(cfg.pt_file)
+    if cfg.checkpoint_file != 'none':
+        model.load_weights(cfg.checkpoint_file)
     optimizer = make_optimizer(cfg)
     model.compile(
         loss='categorical_crossentropy',

@@ -24,15 +24,15 @@ class DataLoader:
             .prefetch(tf.data.experimental.AUTOTUNE)
         return signal_label_dataset
 
-    def make_validation_dataset(self, path_list):
+    def make_val_dataset(self, path_list):
         path_dataset = tf.data.Dataset.from_tensor_slices(path_list)
         signal_dataset = path_dataset\
             .map(self.read_signal, tf.data.experimental.AUTOTUNE)\
             .cache()\
-            .repeat(self.cfg.N_val_windows_per_sample)\
+            .repeat(self.cfg.n_val_windows_per_sample)\
             .map(self.random_crop, tf.data.experimental.AUTOTUNE)
         label_dataset = self.make_label_dataset(path_list)\
-            .repeat(self.cfg.N_val_windows_per_sample)
+            .repeat(self.cfg.n_val_windows_per_sample)
         signal_label_dataset = tf.data.Dataset\
             .zip((signal_dataset, label_dataset))\
             .batch(self.cfg.batch_size_test)\
@@ -63,7 +63,7 @@ class DataLoader:
             .from_generator(
                 lambda: self.get_test_samples(path_list),
                 (tf.float32, tf.int32),
-                ([self.cfg.wlen, 1], [self.cfg.n_classes])
+                ([self.cfg.window_len, 1], [self.cfg.n_classes])
             )\
             .batch(self.cfg.batch_size_test)\
             .cache()\
@@ -78,8 +78,8 @@ class DataLoader:
                 yield chunk, label
 
     def make_test_chunks(self, signal):
-        for chunk_begin in range(0, signal.shape[0] - self.cfg.wlen + 1, self.cfg.wshift):
-            chunk = signal[chunk_begin : chunk_begin + self.cfg.wlen]
+        for chunk_begin in range(0, signal.shape[0] - self.cfg.window_len + 1, self.cfg.window_shift):
+            chunk = signal[chunk_begin : chunk_begin + self.cfg.window_len]
             yield chunk
 
     def read_signal(self, path):
@@ -87,7 +87,7 @@ class DataLoader:
         return self.decode_wav(wav)
 
     def read_wav(self, path):
-        full_path = tf.strings.join([self.cfg.data_folder, path], separator='/')
+        full_path = tf.strings.join([self.cfg.dataset_folder, path], separator='/')
         return tf.io.read_file(full_path)
 
     def decode_wav(self, wav):
@@ -96,11 +96,11 @@ class DataLoader:
         return signal
 
     def random_crop(self, signal):
-        return tf.image.random_crop(signal, [self.cfg.wlen, 1])
+        return tf.image.random_crop(signal, [self.cfg.window_len, 1])
 
     def random_change_amplitude(self, signal_batch, label_batch):
         amp = tf.random.uniform(
-            [self.cfg.wlen, 1],
+            [self.cfg.window_len, 1],
             minval=1.0 - self.cfg.fact_amp,
             maxval=1.0 + self.cfg.fact_amp,
             dtype=tf.float32
@@ -128,7 +128,7 @@ class ClassifierDataLoader(DataLoader):
         super().__init__(cfg)
 
     def transform_path_to_label(self, path):
-        label = self.cfg.lab_dict[path]
+        label = self.cfg.path_to_label[path]
         return to_categorical(label, num_classes=self.cfg.n_classes)
 
 
@@ -137,7 +137,7 @@ class PrintMakerDataLoader(DataLoader):
         super().__init__(cfg)
 
     def transform_path_to_label(self, path):
-        label = self.cfg.lab_dict[path]
+        label = self.cfg.path_to_label[path]
         return label
 
     def make_test_dataset(self, path_list):

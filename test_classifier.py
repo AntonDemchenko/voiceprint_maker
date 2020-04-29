@@ -19,14 +19,14 @@ def test(cfg, model, data_loader, path_list):
                 path_to_prediction_sum[path] = np.zeros([cfg.n_classes])
             path_to_prediction_sum[path] += prediction
             predicted_label = np.argmax(prediction)
-            expected_label = cfg.lab_dict[path]
+            expected_label = cfg.path_to_label[path]
             if expected_label != predicted_label:
                 error_count += 1
     accuracy_sample = 1 - (error_count / samples_count)
     error_count = 0
     for path in path_list:
         prediction_sum = path_to_prediction_sum[path]
-        expected_label = cfg.lab_dict[path]
+        expected_label = cfg.path_to_label[path]
         predicted_label = np.argmax(prediction_sum)
         if expected_label != predicted_label:
             error_count += 1
@@ -37,7 +37,7 @@ def test(cfg, model, data_loader, path_list):
 def main():
     cfg = read_config()
     model = SincNetClassifierFactory(cfg).create()
-    model.load_weights(cfg.pt_file)
+    model.load_weights(cfg.checkpoint_file)
     for layer in model.layers:
         layer.trainable = False
     data_loader = ClassifierDataLoader(cfg)

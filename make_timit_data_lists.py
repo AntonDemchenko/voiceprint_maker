@@ -15,7 +15,7 @@ def main():
 
     all_list_file = os.path.join(output_dir, '{}_all.scp'.format(dataset_name))
     train_list_file = os.path.join(output_dir, '{}_train.scp'.format(dataset_name))
-    validation_list_file = os.path.join(output_dir, '{}_validation.scp'.format(dataset_name))
+    val_list_file = os.path.join(output_dir, '{}_validation.scp'.format(dataset_name))
     test_list_file = os.path.join(output_dir, '{}_test.scp'.format(dataset_name))
 
     pattern = '{}/**/*.wav'.format(dataset_dir)
@@ -38,7 +38,7 @@ def main():
         np.random.shuffle(speaker_to_file_list[speaker])
 
     test_list = []
-    validation_list = []
+    val_list = []
     train_list = []
     test_samples_per_speaker = 2
     val_samples_per_speaker = 1
@@ -46,14 +46,14 @@ def main():
         l = speaker_to_file_list[speaker]
         test_list.extend(l[:test_samples_per_speaker])
         l = l[test_samples_per_speaker:]
-        validation_list.extend(l[:val_samples_per_speaker])
+        val_list.extend(l[:val_samples_per_speaker])
         l = l[val_samples_per_speaker:]
         train_list.extend(l)
 
     save_str_list(all_list_file, all_list)
     save_str_list(test_list_file, test_list)
     save_str_list(train_list_file, train_list)
-    save_str_list(validation_list_file, validation_list)
+    save_str_list(val_list_file, val_list)
 
 
 def save_str_list(path, str_list):

@@ -153,26 +153,26 @@ class SincNetModelFactory:
         self.options = options
 
         self.cnn_batch_norm_input = self.make_batch_norm()\
-            if options.cnn_use_batchnorm_inp\
+            if options.cnn_use_batch_norm_before\
             else None
 
         self.cnn_layer_norm_input = self.make_layer_norm()\
-            if options.cnn_use_laynorm_inp\
+            if options.cnn_use_layer_norm_before\
             else None
 
         sinc = SincConv(
-            out_channels=options.cnn_N_filt[0],
-            kernel_size=options.cnn_len_filt[0],
-            sample_rate=options.fs
+            out_channels=options.cnn_n_filters[0],
+            kernel_size=options.cnn_filter_len[0],
+            sample_rate=options.sample_rate
         )
 
         self.abs = layers.Lambda(lambda x: tf.math.abs(x))
 
-        self.n_conv_layers = len(options.cnn_N_filt)
+        self.n_conv_layers = len(options.cnn_n_filters)
         self.conv = [sinc] + [
             layers.Conv1D(
-                options.cnn_N_filt[i],
-                options.cnn_len_filt[i],
+                options.cnn_n_filters[i],
+                options.cnn_filter_len[i],
                 strides=1,
                 padding='valid'
             )
@@ -184,13 +184,13 @@ class SincNetModelFactory:
         ]
         self.cnn_batch_norm = [
             self.make_batch_norm()
-            if options.cnn_use_batchnorm[i]
+            if options.cnn_use_batch_norm[i]
             else None
             for i in range(self.n_conv_layers)
         ]
         self.cnn_layer_norm = [
             self.make_layer_norm()
-            if options.cnn_use_laynorm[i]
+            if options.cnn_use_layer_norm[i]
             else None
             for i in range(self.n_conv_layers)
         ]
@@ -208,27 +208,27 @@ class SincNetModelFactory:
         self.flatten = layers.Flatten()
 
         self.fc_batch_norm_input = self.make_batch_norm()\
-            if options.fc_use_batchnorm_inp\
+            if options.fc_use_batch_norm_before\
             else None
 
         self.fc_layer_norm_input = self.make_layer_norm()\
-            if options.fc_use_laynorm_inp\
+            if options.fc_use_layer_norm_before\
             else None
 
-        self.n_dense_layers = len(options.fc_lay)
+        self.n_dense_layers = len(options.fc_size)
         self.dense = [
-            layers.Dense(options.fc_lay[i])
+            layers.Dense(options.fc_size[i])
             for i in range(self.n_dense_layers)
         ]
         self.fc_batch_norm = [
             self.make_batch_norm()
-            if options.fc_use_batchnorm[i]
+            if options.fc_use_batch_norm[i]
             else None
             for i in range(self.n_dense_layers)
         ]
         self.fc_layer_norm = [
             self.make_layer_norm()
-            if options.fc_use_laynorm[i]
+            if options.fc_use_layer_norm[i]
             else None
             for i in range(self.n_dense_layers)
         ]
@@ -309,10 +309,10 @@ class SincNetClassifierFactory(SincNetModelFactory):
     def __init__(self, options):
         super().__init__(options)
         self.class_batch_norm = self.make_batch_norm()\
-            if options.class_use_batchnorm_inp\
+            if options.class_use_batch_norm_before\
             else None
         self.class_layer_norm = self.make_layer_norm()\
-            if options.class_use_laynorm_inp\
+            if options.class_use_layer_norm_before\
             else None
         self.class_layer = layers.Dense(self.options.n_classes, activation='softmax')
 

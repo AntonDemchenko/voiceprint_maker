@@ -49,6 +49,9 @@ def make_last_checkpointer(cfg):
 
 
 def make_callbacks(cfg):
+    if not os.path.exists(cfg.output_folder):
+        os.makedirs(cfg.output_folder)
+
     callbacks = []
 
     if cfg.save_checkpoints:

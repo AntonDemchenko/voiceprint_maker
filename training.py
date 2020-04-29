@@ -32,7 +32,7 @@ def make_best_checkpointer(cfg):
     return ModelCheckpoint(
         filepath=cfg.best_checkpoint_path,
         monitor='val_accuracy',
-        verbose=1,
+        verbose=0,
         save_best_only=True,
         save_weights_only=True,
         period=cfg.best_checkpoint_freq

@@ -6,18 +6,26 @@ import numpy as np
 
 
 class SincNetConfigParser(configparser.ConfigParser):
-    def getintlist(self, section, option):
-        return list(map(int, self.getlist(section, option)))
+    def getintlist(self, section, option, size):
+        return list(map(int, self.getlist(section, option, size)))
 
-    def getbooleanlist(self, section, option):
-        return list(map(self._str_to_bool, self.getlist(section, option)))
+    def getbooleanlist(self, section, option, size):
+        return list(map(self._str_to_bool, self.getlist(section, option, size)))
 
-    def getfloatlist(self, section, option):
-        return list(map(float, self.getlist(section, option)))
+    def getfloatlist(self, section, option, size):
+        return list(map(float, self.getlist(section, option, size)))
 
-    def getlist(self, section, option):
+    def getlist(self, section, option, size):
         value = self.get(section, option)
-        return value.split(',')
+        result = value.split(',')
+        if len(result) == 1:
+            result *= size
+        if len(result) != size:
+            raise ValueError(
+                'Invalid length of {}.{} list ({} is expected, {} is found)'\
+                .format(section, option, size, len(result))
+            )
+        return result
 
     def _str_to_bool(self, s):
         if s == 'True':
@@ -37,55 +45,57 @@ class SincNetCfg:
         config.read(cfg_file)
 
         # [data]
-        self.train_list_file = config.get('data', 'tr_lst')
-        self.test_list_file = config.get('data', 'te_lst')
-        self.validation_list_file = config.get('data', 'va_lst')
-        self.labels_dict_file = config.get('data', 'lab_dict')
-        self.data_folder = config.get('data', 'data_folder') + '/'
+        self.train_list_file = config.get('data', 'train_list_file')
+        self.test_list_file = config.get('data', 'test_list_file')
+        self.validation_list_file = config.get('data', 'val_list_file')
+        self.labels_dict_file = config.get('data', 'path_to_label_file')
+        self.data_folder = config.get('data', 'dataset_folder') + '/'
         self.output_folder = config.get('data', 'output_folder')
-        self.pt_file = config.get('data', 'pt_file')
+        self.pt_file = config.get('data', 'checkpoint_file')
 
         # [windowing]
-        self.fs = config.getint('windowing', 'fs')
-        self.cw_len = config.getint('windowing', 'cw_len')
-        self.cw_shift = config.getint('windowing', 'cw_shift')
+        self.fs = config.getint('windowing', 'sample_rate')
+        self.cw_len = config.getint('windowing', 'window_len_ms')
+        self.cw_shift = config.getint('windowing', 'window_shift_ms')
 
         # [cnn]
-        self.cnn_N_filt = config.getintlist('cnn', 'cnn_N_filt')
-        self.cnn_len_filt = config.getintlist('cnn', 'cnn_len_filt')
-        self.cnn_max_pool_len = config.getintlist('cnn', 'cnn_max_pool_len')
-        self.cnn_use_laynorm_inp = config.getboolean('cnn', 'cnn_use_laynorm_inp')
-        self.cnn_use_batchnorm_inp = config.getboolean('cnn', 'cnn_use_batchnorm_inp')
-        self.cnn_use_laynorm = config.getbooleanlist('cnn', 'cnn_use_laynorm')
-        self.cnn_use_batchnorm = config.getbooleanlist('cnn', 'cnn_use_batchnorm')
-        self.cnn_act = config.getlist('cnn', 'cnn_act')
-        self.cnn_drop = config.getfloatlist('cnn', 'cnn_drop')
+        self.cnn_n_layers = config.getint('cnn', 'cnn_n_layers')
+        self.cnn_N_filt = config.getintlist('cnn', 'cnn_n_filters', self.cnn_n_layers)
+        self.cnn_len_filt = config.getintlist('cnn', 'cnn_filter_len', self.cnn_n_layers)
+        self.cnn_max_pool_len = config.getintlist('cnn', 'cnn_max_pool_len', self.cnn_n_layers)
+        self.cnn_use_laynorm_inp = config.getboolean('cnn', 'cnn_use_layer_norm_before')
+        self.cnn_use_batchnorm_inp = config.getboolean('cnn', 'cnn_use_batch_norm_before')
+        self.cnn_use_laynorm = config.getbooleanlist('cnn', 'cnn_use_layer_norm', self.cnn_n_layers)
+        self.cnn_use_batchnorm = config.getbooleanlist('cnn', 'cnn_use_batch_norm', self.cnn_n_layers)
+        self.cnn_act = config.getlist('cnn', 'cnn_act', self.cnn_n_layers)
+        self.cnn_drop = config.getfloatlist('cnn', 'cnn_drop', self.cnn_n_layers)
 
         # [dnn]
-        self.fc_lay = config.getintlist('dnn', 'fc_lay')
-        self.fc_drop = config.getfloatlist('dnn', 'fc_drop')
-        self.fc_use_laynorm_inp = config.getboolean('dnn', 'fc_use_laynorm_inp')
-        self.fc_use_batchnorm_inp = config.getboolean('dnn', 'fc_use_batchnorm_inp')
-        self.fc_use_batchnorm = config.getbooleanlist('dnn', 'fc_use_batchnorm')
-        self.fc_use_laynorm = config.getbooleanlist('dnn', 'fc_use_laynorm')
-        self.fc_act = config.getlist('dnn', 'fc_act')
+        self.fc_n_layers = config.getint('dnn', 'fc_n_layers')
+        self.fc_lay = config.getintlist('dnn', 'fc_size', self.fc_n_layers)
+        self.fc_use_laynorm_inp = config.getboolean('dnn', 'fc_use_layer_norm_before')
+        self.fc_use_batchnorm_inp = config.getboolean('dnn', 'fc_use_batch_norm_before')
+        self.fc_use_batchnorm = config.getbooleanlist('dnn', 'fc_use_batch_norm', self.fc_n_layers)
+        self.fc_use_laynorm = config.getbooleanlist('dnn', 'fc_use_layer_norm', self.fc_n_layers)
+        self.fc_act = config.getlist('dnn', 'fc_act', self.fc_n_layers)
+        self.fc_drop = config.getfloatlist('dnn', 'fc_drop', self.fc_n_layers)
 
         # [class]
-        self.class_lay = config.getintlist('class', 'class_lay')
-        self.class_use_laynorm_inp = config.getboolean('class', 'class_use_laynorm_inp')
+        self.n_classes = config.getint('class', 'n_classes')
+        self.class_use_laynorm_inp = config.getboolean('class', 'class_use_layer_norm_before')
         self.class_use_batchnorm_inp = config.getboolean(
-            'class', 'class_use_batchnorm_inp'
+            'class', 'class_use_batch_norm_before'
         )
 
         # [optimization]
         self.optimizer = config.get('optimization', 'optimizer')
         self.lr = config.getfloat('optimization', 'lr')
         self.batch_size = config.getint('optimization', 'batch_size')
-        self.N_epochs = config.getint('optimization', 'N_epochs')
-        self.N_batches = config.getint('optimization', 'N_batches')
-        self.N_eval_epoch = config.getint('optimization', 'N_eval_epoch')
+        self.N_epochs = config.getint('optimization', 'n_epochs')
+        self.N_batches = config.getint('optimization', 'n_batches')
+        self.N_eval_epoch = config.getint('optimization', 'n_eval_epoch')
         self.seed = config.getint('optimization', 'seed')
-        self.N_val_windows_per_sample = config.getint('optimization', 'N_val_windows_per_sample')
+        self.N_val_windows_per_sample = config.getint('optimization', 'n_val_windows_per_sample')
         self.batch_size_test = config.getint('optimization', 'batch_size_test')
 
         # [callbacks]
@@ -101,20 +111,14 @@ class SincNetCfg:
         self.wlen = int(self.fs * self.cw_len / 1000.00)
         self.wshift = int(self.fs * self.cw_shift / 1000.00)
 
-        # Initialization of the minibatch (batch_size,[0=>x_t,1=>x_t+N,1=>random_samp])
-        # self.sig_batch = np.zeros([self.batch_size, self.wlen])
-        # self.lab_batch = np.zeros(self.batch_size)
         self.out_dim = 100
-        self.n_classes = self.class_lay[0]
         self.input_shape = (self.wlen, 1)
 
         # Loading train list
         self.train_list = self._read_list_file(self.train_list_file)
-        self.snt_tr = len(self.train_list)
 
         # Loading test list
         self.test_list = self._read_list_file(self.test_list_file)
-        self.snt_te = len(self.test_list)
 
         # Loading validation list
         self.validation_list = self._read_list_file(self.validation_list_file)

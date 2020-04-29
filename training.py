@@ -32,7 +32,7 @@ def make_best_checkpointer(cfg):
     return ModelCheckpoint(
         filepath=cfg.best_checkpoint_path,
         monitor='val_accuracy',
-        verbose=1,
+        verbose=0,
         save_best_only=True,
         save_weights_only=True,
         period=cfg.best_checkpoint_freq
@@ -49,6 +49,9 @@ def make_last_checkpointer(cfg):
 
 
 def make_callbacks(cfg):
+    if not os.path.exists(cfg.output_folder):
+        os.makedirs(cfg.output_folder)
+
     callbacks = []
 
     if cfg.save_checkpoints:

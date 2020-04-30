@@ -49,7 +49,7 @@ class SincNetCfg:
         self.test_list_file = config.get('data', 'test_list_file')
         self.val_list_file = config.get('data', 'val_list_file')
         self.path_to_label_file = config.get('data', 'path_to_label_file')
-        self.dataset_folder = config.get('data', 'dataset_folder') + '/'
+        self.dataset_folder = config.get('data', 'dataset_folder')
         self.output_folder = config.get('data', 'output_folder')
         self.checkpoint_file = config.get('data', 'checkpoint_file')
 

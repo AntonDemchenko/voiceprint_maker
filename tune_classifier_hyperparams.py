@@ -17,39 +17,51 @@ from test_classifier import test
 BATCH = 'batch'
 LAYER = 'layer'
 
+CNN_NORM_BEFORE = [BATCH, LAYER, None]
+CNN_N_LAYERS = 3
+CNN_NORM = [BATCH, LAYER]
+CNN_DROP_RANGE = [0.0, 0.4]
 
-def random_norm():
-    return random.choice([BATCH, LAYER])
+FC_NORM_BEFORE = [BATCH, LAYER, None]
+FC_N_LAYERS_RANGE = [1, 3]
+FC_SIZES = [128, 256, 512, 1024, 2048]
+FC_NORM = [BATCH, LAYER]
+FC_DROP_RANGE = [0.0, 0.4]
 
-
-def random_input_norm():
-    return random.choice([BATCH, LAYER, None])
+CLASS_NORM_BEFORE = [BATCH, LAYER, None]
+ACTIVATIONS = ['relu', 'leaky_relu']
+LOG10_LEARNING_RATE_RANGE = [-3, -2.15]
+OPTIMIZERS = ['adam', 'rmsprop']
 
 
 def get_random_options():
-    cnn_input_norm = random_input_norm()
-    cnn_norm = random_norm()
-    fc_input_norm = random_input_norm()
-    fc_norm = random_norm()
-    class_input_norm = random_input_norm()
+    cnn_norm_before = random.choice(CNN_NORM_BEFORE)
+    cnn_norm = random.choice(CNN_NORM)
+    fc_norm_before = random.choice(FC_NORM_BEFORE)
+    fc_norm = random.choice(FC_NORM)
+    class_norm_before = random.choice(CLASS_NORM_BEFORE)
+    fc_n_layers = random.randrange(*FC_N_LAYERS_RANGE)
+
     return {
-        'cnn_use_laynorm_inp': (cnn_input_norm == LAYER),
-        'cnn_use_batchnorm_inp': (cnn_input_norm == BATCH),
-        'cnn_use_laynorm': [cnn_norm == LAYER] * 3,
-        'cnn_use_batchnorm': [cnn_norm == BATCH] * 3,
-        'cnn_act': [random.choice(['relu', 'leaky_relu'])] * 3,
-        'cnn_drop': [random.uniform(0.0, 0.4)] * 3,
-        'fc_use_laynorm_inp': (fc_input_norm == LAYER),
-        'fc_use_batchnorm_inp': (fc_input_norm == BATCH),
-        'fc_lay': [random.choice([128, 256, 512, 1024, 2048])] * 3,
-        'fc_use_laynorm': [fc_norm == LAYER] * 3,
-        'fc_use_batchnorm': [fc_norm == BATCH] * 3,
-        'fc_act': [random.choice(['relu', 'leaky_relu'])] * 3,
-        'fc_drop': [random.uniform(0.0, 0.4)] * 3,
-        'class_use_laynorm_inp': (class_input_norm == LAYER),
-        'class_use_batchnorm_inp': (class_input_norm == BATCH),
-        'lr': 10 ** random.uniform(-3, -2.15),
-        'optimizer': random.choice(['adam', 'rmsprop'])
+        'cnn_use_layer_norm_before': (cnn_norm_before == LAYER),
+        'cnn_use_batch_norm_before': (cnn_norm_before == BATCH),
+        'cnn_n_layers': CNN_N_LAYERS,
+        'cnn_use_layer_norm': [cnn_norm == LAYER] * CNN_N_LAYERS,
+        'cnn_use_batch_norm': [cnn_norm == BATCH] * CNN_N_LAYERS,
+        'cnn_act': [random.choice(ACTIVATIONS)] * CNN_N_LAYERS,
+        'cnn_drop': [random.uniform(*CNN_DROP_RANGE)] * CNN_N_LAYERS,
+        'fc_use_layer_norm_before': (fc_norm_before == LAYER),
+        'fc_use_batch_norm_before': (fc_norm_before == BATCH),
+        'fc_n_layers': fc_n_layers,
+        'fc_size': [random.choice(FC_SIZES)] * fc_n_layers,
+        'fc_use_layer_norm': [fc_norm == LAYER] * fc_n_layers,
+        'fc_use_batch_norm': [fc_norm == BATCH] * fc_n_layers,
+        'fc_act': [random.choice(ACTIVATIONS)] * fc_n_layers,
+        'fc_drop': [random.uniform(*FC_DROP_RANGE)] * fc_n_layers,
+        'class_use_layer_norm_before': (class_norm_before == LAYER),
+        'class_use_batch_norm_before': (class_norm_before == BATCH),
+        'lr': 10 ** random.uniform(*LOG10_LEARNING_RATE_RANGE),
+        'optimizer': random.choice(OPTIMIZERS)
     }
 
 
@@ -129,7 +141,7 @@ def do_tune_step(cfg, output_folder):
     # for layer in model.layers:
     #     layer.trainable = False
     # all_chunks_val_acc, sentence_val_acc = test(
-    #     cfg, model, data_loader, cfg.validation_list
+    #     cfg, model, data_loader, cfg.val_list
     # )
 
     accuracies = dict(

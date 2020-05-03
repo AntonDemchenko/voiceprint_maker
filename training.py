@@ -77,15 +77,15 @@ def train(cfg, model, data_loader, callbacks=[]):
     callbacks.extend(make_callbacks(cfg))
 
     train_dataset = data_loader.make_train_dataset(cfg.train_list)
-    validation_dataset = data_loader.make_validation_dataset(cfg.validation_list)
+    val_dataset = data_loader.make_test_dataset(cfg.val_list)
     result = model.fit(
         train_dataset,
-        steps_per_epoch=cfg.N_batches,
+        steps_per_epoch=cfg.n_batches,
         initial_epoch=cfg.initial_epoch,
-        epochs=cfg.N_epochs,
+        epochs=cfg.n_epochs,
         verbose=2,
         callbacks=callbacks,
-        validation_data=validation_dataset,
-        validation_freq=cfg.N_eval_epoch
+        validation_data=val_dataset,
+        validation_freq=cfg.val_freq
     )
     return result

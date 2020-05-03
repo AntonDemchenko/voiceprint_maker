@@ -9,9 +9,9 @@ from training import train
 
 def make_model(cfg):
     model = SincNetPrintMakerFactory(cfg).create()
-    if cfg.pt_file != 'none':
+    if cfg.checkpoint_file != 'none':
         # Skip mismatch enables to load weights of networks with other head
-        model.load_weights(cfg.pt_file, by_name=True, skip_mismatch=True)
+        model.load_weights(cfg.checkpoint_file, by_name=True, skip_mismatch=True)
     for layer in model.layers[:-2]:
         layer.trainable = False
 

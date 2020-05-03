@@ -15,8 +15,10 @@ class DataLoader:
             .cache()\
             .map(self.random_crop, tf.data.experimental.AUTOTUNE)
         label_dataset = self.make_label_dataset(path_list)
+        input_dataset = tf.data.Dataset\
+            .zip((signal_dataset, label_dataset))
         signal_label_dataset = tf.data.Dataset\
-            .zip((signal_dataset, label_dataset))\
+            .zip((input_dataset, label_dataset))\
             .shuffle(len(path_list))\
             .repeat()\
             .batch(self.cfg.batch_size)\

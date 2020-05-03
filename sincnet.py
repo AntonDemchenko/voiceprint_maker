@@ -6,6 +6,8 @@ from keras.utils import conv_utils
 from tensorflow.keras import backend as K
 from tensorflow.keras import layers
 
+from metrics import CosFace
+
 
 class SincConv1D(tf.keras.layers.Layer):
     def __init__(self, N_filt, Filt_dim, fs, **kwargs):
@@ -186,11 +188,11 @@ class SincNetModelFactory:
             self.layer_norm_6 = layers.LayerNormalization(epsilon=1e-6)
         self.leaky_relu_6 = layers.LeakyReLU(alpha=0.2)
 
-    def get_prediction(self, x):
-        raise NotImplementedError
+        self.head = CosFace(n_classes=options.n_classes)
 
     def create(self):
-        inputs = layers.Input(self.options.input_shape)
+        inputs = layers.Input(shape=self.options.input_shape)
+        labels = layers.Input(shape=[self.options.n_classes,])
 
         x = self.sinc_1(inputs)
 
@@ -239,26 +241,6 @@ class SincNetModelFactory:
             x = self.layer_norm_6(x)
         x = self.leaky_relu_6(x)
 
-        prediction = self.get_prediction(x)
+        prediction = self.head([x, labels])
 
-        model = tf.keras.Model(inputs=inputs, outputs=prediction)
-        return model
-
-
-class SincNetClassifierFactory(SincNetModelFactory):
-    def __init__(self, options):
-        super().__init__(options)
-
-    def get_prediction(self, x):
-        x = layers.Dense(self.options.n_classes, activation='softmax')(x)
-        return x
-
-
-class SincNetPrintMakerFactory(SincNetModelFactory):
-    def __init__(self, options):
-        super().__init__(options)
-
-    def get_prediction(self, x):
-        x = layers.Dense(self.options.out_dim)(x)
-        x = layers.Lambda(lambda x: tf.math.l2_normalize(x, axis=1))(x)
-        return x
+        return tf.keras.Model(inputs=[inputs, labels], outputs=prediction)

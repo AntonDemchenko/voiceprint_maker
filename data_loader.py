@@ -34,8 +34,10 @@ class DataLoader:
             .map(self.random_crop, tf.data.experimental.AUTOTUNE)
         label_dataset = self.make_label_dataset(path_list)\
             .repeat(self.cfg.n_val_windows_per_sample)
+        input_dataset = tf.data.Dataset\
+            .zip((signal_dataset, label_dataset))
         signal_label_dataset = tf.data.Dataset\
-            .zip((signal_dataset, label_dataset))\
+            .zip((input_dataset, label_dataset))\
             .batch(self.cfg.batch_size_test)\
             .cache()\
             .prefetch(tf.data.experimental.AUTOTUNE)
@@ -63,8 +65,8 @@ class DataLoader:
         dataset = tf.data.Dataset\
             .from_generator(
                 lambda: self.get_test_samples(path_list),
-                (tf.float32, tf.int32),
-                ([self.cfg.window_len, 1], [self.cfg.n_classes])
+                ((tf.float32, tf.int32), tf.int32),
+                (([self.cfg.window_len, 1], [self.cfg.n_classes]), [self.cfg.n_classes])
             )\
             .batch(self.cfg.batch_size_test)\
             .cache()\

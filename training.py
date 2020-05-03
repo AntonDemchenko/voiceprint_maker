@@ -77,7 +77,7 @@ def train(cfg, model, data_loader, callbacks=[]):
     callbacks.extend(make_callbacks(cfg))
 
     train_dataset = data_loader.make_train_dataset(cfg.train_list)
-    val_dataset = data_loader.make_test_dataset(cfg.val_list)
+    val_dataset = data_loader.make_val_dataset(cfg.val_list)
     result = model.fit(
         train_dataset,
         steps_per_epoch=cfg.n_batches,

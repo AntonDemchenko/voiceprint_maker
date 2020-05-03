@@ -22,7 +22,6 @@ class DataLoader:
             .shuffle(len(path_list))\
             .repeat()\
             .batch(self.cfg.batch_size)\
-            .map(self.random_change_amplitude, tf.data.experimental.AUTOTUNE)\
             .prefetch(tf.data.experimental.AUTOTUNE)
         return signal_label_dataset
 
@@ -77,7 +76,7 @@ class DataLoader:
             signal = self.read_signal(path)
             label = self.transform_path_to_label(path)
             for chunk in self.make_test_chunks(signal):
-                yield chunk, label
+                yield ((chunk, label), label)
 
     def make_test_chunks(self, signal):
         for chunk_begin in range(0, signal.shape[0] - self.cfg.window_len + 1, self.cfg.window_shift):
@@ -107,7 +106,7 @@ class DataLoader:
             maxval=1.0 + self.cfg.fact_amp,
             dtype=tf.float32
         )
-        signal_batch *= amp
+        signal_batch[0] *= amp
         return (signal_batch, label_batch)
 
     def label_to_categorical(self, label):

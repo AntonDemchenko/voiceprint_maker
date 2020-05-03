@@ -101,7 +101,6 @@ class CosFace(Layer):
 
     def build(self, input_shape):
         super(CosFace, self).build(input_shape[0])
-        print(input_shape)
         self.W = self.add_weight(name='W',
                                 shape=(input_shape[0][-1], self.n_classes),
                                 initializer='glorot_uniform',

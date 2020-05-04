@@ -167,21 +167,21 @@ class SincNetModelFactory:
         self.leaky_relu_3 = layers.LeakyReLU(alpha=0.2)
         self.flatten = layers.Flatten()
 
-        self.dense_4 = layers.Dense(options.fc_size[0])
+        self.dense_4 = layers.Dense(options.fc_size[0], kernel_initializer='he_normal')
         if options.fc_use_batch_norm[0]:
             self.batch_norm_4 = layers.BatchNormalization(momentum=0.95, epsilon=1e-5)
         if options.fc_use_layer_norm[0]:
             self.layer_norm_4 = layers.LayerNormalization(epsilon=1e-6)
         self.leaky_relu_4 = layers.LeakyReLU(alpha=0.2)
 
-        self.dense_5 = layers.Dense(options.fc_size[1])
+        self.dense_5 = layers.Dense(options.fc_size[1], kernel_initializer='he_normal')
         if options.fc_use_batch_norm[1]:
             self.batch_norm_5 = layers.BatchNormalization(momentum=0.95, epsilon=1e-5)
         if options.fc_use_layer_norm[1]:
             self.layer_norm_5 = layers.LayerNormalization(epsilon=1e-6)
         self.leaky_relu_5 = layers.LeakyReLU(alpha=0.2)
 
-        self.dense_6 = layers.Dense(options.fc_size[2])
+        self.dense_6 = layers.Dense(options.fc_size[2], kernel_initializer='he_normal')
         if options.fc_use_batch_norm[2]:
             self.batch_norm_6 = layers.BatchNormalization(momentum=0.95, epsilon=1e-5)
         if options.fc_use_layer_norm[2]:

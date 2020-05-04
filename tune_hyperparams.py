@@ -7,8 +7,8 @@ from uuid import uuid4
 from tensorflow.keras.callbacks import Callback
 
 from config import read_config
-from data_loader import ClassifierDataLoader
-from sincnet import SincNetClassifierFactory
+from data_loader import DataLoader
+from sincnet import SincNetModelFactory
 from training import train
 from train_classifier import make_model
 from test_classifier import test
@@ -134,7 +134,7 @@ def do_tune_step(cfg, output_folder):
     assert before == len(cfg.__dict__)
 
     model = make_model(cfg)
-    data_loader = ClassifierDataLoader(cfg)
+    data_loader = DataLoader(cfg)
     callbacks = [make_early_stopping(cfg)]
     history = train(cfg, model, data_loader, callbacks)
 

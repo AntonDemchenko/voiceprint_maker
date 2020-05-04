@@ -2,8 +2,8 @@ import numpy as np
 from tqdm import tqdm
 
 from config import read_config
-from data_loader import ClassifierDataLoader
-from sincnet import SincNetClassifierFactory
+from data_loader import DataLoader
+from sincnet import SincNetModelFactory
 
 
 def test(cfg, model, data_loader, path_list):
@@ -36,11 +36,11 @@ def test(cfg, model, data_loader, path_list):
 
 def main():
     cfg = read_config()
-    model = SincNetClassifierFactory(cfg).create()
+    model = SincNetModelFactory(cfg).create()
     model.load_weights(cfg.checkpoint_file)
     for layer in model.layers:
         layer.trainable = False
-    data_loader = ClassifierDataLoader(cfg)
+    data_loader = DataLoader(cfg)
     accuracy = test(cfg, model, data_loader, cfg.test_list)
     print(accuracy)
 

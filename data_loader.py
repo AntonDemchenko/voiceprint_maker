@@ -123,35 +123,5 @@ class DataLoader:
         )
 
     def transform_path_to_label(self, path):
-        raise NotImplementedError
-
-
-class ClassifierDataLoader(DataLoader):
-    def __init__(self, cfg):
-        super().__init__(cfg)
-
-    def transform_path_to_label(self, path):
         label = self.cfg.path_to_label[path]
         return to_categorical(label, num_classes=self.cfg.n_classes)
-
-
-class PrintMakerDataLoader(DataLoader):
-    def __init__(self, cfg):
-        super().__init__(cfg)
-
-    def transform_path_to_label(self, path):
-        label = self.cfg.path_to_label[path]
-        return label
-
-    def make_test_dataset(self, path_list):
-        samples = list(self.get_test_samples(path_list))
-        np.random.shuffle(samples)
-        signal_list = list([s[0] for s in samples])
-        label_list = list([s[1] for s in samples])
-        signal_tensor = tf.convert_to_tensor(signal_list)
-        label_tensor = tf.convert_to_tensor(label_list)
-        dataset = tf.data.Dataset.from_tensor_slices(
-            (signal_tensor, label_tensor)
-        )
-        dataset = dataset.batch(self.cfg.batch_size_test)
-        return dataset

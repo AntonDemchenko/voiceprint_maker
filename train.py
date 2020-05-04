@@ -1,5 +1,5 @@
 from config import read_config
-from data_loader import ClassifierDataLoader
+from data_loader import DataLoader
 from sincnet import SincNetModelFactory
 from training import make_optimizer
 from training import train
@@ -21,7 +21,7 @@ def make_model(cfg):
 def main():
     cfg = read_config()
     model = make_model(cfg)
-    data_loader = ClassifierDataLoader(cfg)
+    data_loader = DataLoader(cfg)
     train(cfg, model, data_loader)
 
 

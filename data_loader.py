@@ -47,19 +47,31 @@ class DataLoader:
         def get_test_samples(path_list):
             for path in path_list:
                 signal = self.read_signal(path)
+                label = self.transform_path_to_label(path)
                 for chunk in self.make_test_chunks(signal):
-                    yield path, chunk
+                    yield path, chunk, label
         path_batch = []
         signal_batch = []
-        for path, signal in get_test_samples(path_list):
+        label_batch = []
+        for path, signal, label in get_test_samples(path_list):
             path_batch.append(path)
             signal_batch.append(signal)
+            label_batch.append(label)
             if len(path_batch) == self.cfg.batch_size_test:
-                yield np.array(path_batch), tf.convert_to_tensor(signal_batch)
+                yield (
+                    np.array(path_batch),
+                    tf.convert_to_tensor(signal_batch),
+                    tf.convert_to_tensor(label_batch)
+                )
                 path_batch = []
                 signal_batch = []
+                label_batch = []
         if path_batch:
-            yield np.array(path_batch), tf.convert_to_tensor(signal_batch)
+            yield (
+                np.array(path_batch),
+                tf.convert_to_tensor(signal_batch),
+                tf.convert_to_tensor(label_batch)
+            )
 
     def make_test_dataset(self, path_list):
         dataset = tf.data.Dataset\
@@ -110,9 +122,6 @@ class DataLoader:
         )
         signal_batch[0] *= amp
         return (signal_batch, label_batch)
-
-    def label_to_categorical(self, label):
-        return to_categorical(label, num_classes=self.cfg.n_classes)
 
     def make_label_dataset(self, path_list):
         return tf.data.Dataset.from_tensor_slices(

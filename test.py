@@ -11,9 +11,9 @@ def test(cfg, model, data_loader, path_list):
     path_to_prediction_sum = dict()
     samples_count = 0
     error_count = 0
-    for path_batch, signal_batch in tqdm(dataset):
+    for path_batch, signal_batch, label_batch in tqdm(dataset):
         samples_count += len(path_batch)
-        prediction_batch = model.predict(signal_batch)
+        prediction_batch = model.predict([signal_batch, label_batch])
         for path, prediction in zip(path_batch, prediction_batch):
             if path not in path_to_prediction_sum:
                 path_to_prediction_sum[path] = np.zeros([cfg.n_classes])

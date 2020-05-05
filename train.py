@@ -1,12 +1,12 @@
+import sincnet
 from config import read_config
 from data_loader import DataLoader
-from sincnet import SincNetModelFactory
 from training import make_optimizer
 from training import train
 
 
 def make_model(cfg):
-    model = SincNetModelFactory(cfg).create()
+    model = sincnet.create_model(cfg)
     if cfg.checkpoint_file != 'none':
         model.load_weights(cfg.checkpoint_file)
     optimizer = make_optimizer(cfg)

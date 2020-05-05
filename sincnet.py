@@ -4,12 +4,12 @@ import numpy as np
 import tensorflow as tf
 from keras.utils import conv_utils
 from tensorflow.keras import backend as K
-from tensorflow.keras import layers
+from tensorflow.keras import layers as L
 
 from metrics import CosFace
 
 
-class SincConv1D(tf.keras.layers.Layer):
+class SincConv1D(L.Layer):
     def __init__(self, N_filt, Filt_dim, fs, **kwargs):
         self.N_filt = N_filt
         self.Filt_dim = Filt_dim
@@ -132,127 +132,48 @@ def sinc(band, t_right):
     return y
 
 
-class SincNetModelFactory:
-    def __init__(self, options):
-        self.options = options
+def create_model(options):
+    inputs = L.Input(shape=options.input_shape)
+    labels = L.Input(shape=[options.n_classes,])
 
-        self.sinc_1 = SincConv1D(
-            options.cnn_n_filters[0], options.cnn_filter_len[0], options.sample_rate
+    layers = []
+
+    for i in range(options.cnn_n_layers):
+        conv = SincConv1D(
+            options.cnn_n_filters[0],
+            options.cnn_filter_len[0],
+            options.sample_rate
+        )\
+        if i == 0\
+        else L.Conv1D(
+            options.cnn_n_filters[i],
+            options.cnn_filter_len[i],
+            strides=1,
+            padding='valid'
         )
-        self.maxpool_1 = layers.MaxPooling1D(pool_size=options.cnn_max_pool_len[0])
-        if options.cnn_use_batch_norm[0]:
-            self.batch_norm_1 = layers.BatchNormalization(momentum=0.95, epsilon=1e-5)
-        if options.cnn_use_layer_norm[0]:
-            self.layer_norm_1 = layers.LayerNormalization(epsilon=1e-6)
-        self.leaky_relu_1 = layers.LeakyReLU(alpha=0.2)
+        layers.append(conv)
+        layers.append(L.MaxPooling1D(pool_size=options.cnn_max_pool_len[i]))
+        if options.cnn_use_batch_norm[i]:
+            layers.append(L.BatchNormalization(momentum=0.95, epsilon=1e-5))
+        if options.cnn_use_layer_norm[i]:
+            layers.append(L.LayerNormalization(epsilon=1e-6))
+        layers.append(L.LeakyReLU(alpha=0.2))
+        if options.cnn_drop[i] > 1e-12:
+            layers.append(L.Dropout(options.cnn_drop[i]))
+    layers.append(L.Flatten())
+    for i in range(options.fc_n_layers):
+        layers.append(L.Dense(options.fc_size[i], kernel_initializer='he_normal'))
+        if options.fc_use_batch_norm[i]:
+            layers.append(L.BatchNormalization(momentum=0.95, epsilon=1e-5))
+        if options.fc_use_layer_norm[i]:
+            layers.append(L.LayerNormalization(epsilon=1e-6))
+        if options.fc_drop[i] > 1e-12:
+            layers.append(L.Dropout(options.fc_drop[i]))
+    head = CosFace(n_classes=options.n_classes)
 
-        self.conv_2 = layers.Conv1D(
-            options.cnn_n_filters[1], options.cnn_filter_len[1], strides=1, padding='valid'
-        )
-        self.maxpool_2 = layers.MaxPooling1D(pool_size=options.cnn_max_pool_len[1])
-        if options.cnn_use_batch_norm[1]:
-            self.batch_norm_2 = layers.BatchNormalization(momentum=0.95, epsilon=1e-5)
-        if options.cnn_use_layer_norm[1]:
-            self.layer_norm_2 = layers.LayerNormalization(epsilon=1e-6)
-        self.leaky_relu_2 = layers.LeakyReLU(alpha=0.2)
+    x = inputs
+    for layer in layers:
+        x = layer(x)
+    prediction = head([x, labels])
 
-        self.conv_3 = layers.Conv1D(
-            options.cnn_n_filters[2], options.cnn_filter_len[2], strides=1, padding='valid'
-        )
-        self.maxpool_3 = layers.MaxPooling1D(pool_size=options.cnn_max_pool_len[2])
-        if options.cnn_use_batch_norm[2]:
-            self.batch_norm_3 = layers.BatchNormalization(momentum=0.95, epsilon=1e-5)
-        if options.cnn_use_layer_norm[2]:
-            self.layer_norm_3 = layers.LayerNormalization(epsilon=1e-6)
-        self.leaky_relu_3 = layers.LeakyReLU(alpha=0.2)
-        self.flatten = layers.Flatten()
-
-        self.dense_4 = layers.Dense(options.fc_size[0], kernel_initializer='he_normal')
-        if options.fc_use_batch_norm[0]:
-            self.batch_norm_4 = layers.BatchNormalization(momentum=0.95, epsilon=1e-5)
-        if options.fc_use_layer_norm[0]:
-            self.layer_norm_4 = layers.LayerNormalization(epsilon=1e-6)
-        self.leaky_relu_4 = layers.LeakyReLU(alpha=0.2)
-        if options.fc_drop[0] > 1e-12:
-            self.fc_dropout_4 = layers.Dropout(options.fc_drop[0])
-
-        self.dense_5 = layers.Dense(options.fc_size[1], kernel_initializer='he_normal')
-        if options.fc_use_batch_norm[1]:
-            self.batch_norm_5 = layers.BatchNormalization(momentum=0.95, epsilon=1e-5)
-        if options.fc_use_layer_norm[1]:
-            self.layer_norm_5 = layers.LayerNormalization(epsilon=1e-6)
-        self.leaky_relu_5 = layers.LeakyReLU(alpha=0.2)
-        if options.fc_drop[1] > 1e-12:
-            self.fc_dropout_5 = layers.Dropout(options.fc_drop[1])
-
-        self.dense_6 = layers.Dense(options.fc_size[2], kernel_initializer='he_normal')
-        if options.fc_use_batch_norm[2]:
-            self.batch_norm_6 = layers.BatchNormalization(momentum=0.95, epsilon=1e-5)
-        if options.fc_use_layer_norm[2]:
-            self.layer_norm_6 = layers.LayerNormalization(epsilon=1e-6)
-        self.leaky_relu_6 = layers.LeakyReLU(alpha=0.2)
-        if options.fc_drop[2] > 1e-12:
-            self.fc_dropout_6 = layers.Dropout(options.fc_drop[2])
-
-        self.head = CosFace(n_classes=options.n_classes)
-
-    def create(self):
-        inputs = layers.Input(shape=self.options.input_shape)
-        labels = layers.Input(shape=[self.options.n_classes,])
-
-        x = self.sinc_1(inputs)
-
-        x = self.maxpool_1(x)
-        if self.options.cnn_use_batch_norm[0]:
-            x = self.batch_norm_1(x)
-        if self.options.cnn_use_layer_norm[0]:
-            x = self.layer_norm_1(x)
-        x = self.leaky_relu_1(x)
-
-        x = self.conv_2(x)
-        x = self.maxpool_2(x)
-        if self.options.cnn_use_batch_norm[1]:
-            x = self.batch_norm_2(x)
-        if self.options.cnn_use_layer_norm[1]:
-            x = self.layer_norm_2(x)
-        x = self.leaky_relu_2(x)
-
-        x = self.conv_3(x)
-        x = self.maxpool_3(x)
-        if self.options.cnn_use_batch_norm[2]:
-            x = self.batch_norm_3(x)
-        if self.options.cnn_use_layer_norm[2]:
-            x = self.layer_norm_3(x)
-        x = self.leaky_relu_3(x)
-        x = self.flatten(x)
-
-        x = self.dense_4(x)
-        if self.options.fc_use_batch_norm[0]:
-            x = self.batch_norm_4(x)
-        if self.options.fc_use_layer_norm[0]:
-            x = self.layer_norm_4(x)
-        x = self.leaky_relu_4(x)
-        if self.options.fc_drop[0] > 1e-12:
-            x = self.fc_dropout_4(x)
-
-        x = self.dense_5(x)
-        if self.options.fc_use_batch_norm[1]:
-            x = self.batch_norm_5(x)
-        if self.options.fc_use_layer_norm[1]:
-            x = self.layer_norm_5(x)
-        x = self.leaky_relu_5(x)
-        if self.options.fc_drop[1] > 1e-12:
-            x = self.fc_dropout_5(x)
-
-        x = self.dense_6(x)
-        if self.options.fc_use_batch_norm[2]:
-            x = self.batch_norm_6(x)
-        if self.options.fc_use_layer_norm[2]:
-            x = self.layer_norm_6(x)
-        x = self.leaky_relu_6(x)
-        if self.options.fc_drop[2] > 1e-12:
-            x = self.fc_dropout_6(x)
-
-        prediction = self.head([x, labels])
-
-        return tf.keras.Model(inputs=[inputs, labels], outputs=prediction)
+    return tf.keras.Model(inputs=[inputs, labels], outputs=prediction)

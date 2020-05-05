@@ -173,6 +173,8 @@ class SincNetModelFactory:
         if options.fc_use_layer_norm[0]:
             self.layer_norm_4 = layers.LayerNormalization(epsilon=1e-6)
         self.leaky_relu_4 = layers.LeakyReLU(alpha=0.2)
+        if options.fc_drop[0] > 1e-12:
+            self.fc_dropout_4 = layers.Dropout(options.fc_drop[0])
 
         self.dense_5 = layers.Dense(options.fc_size[1], kernel_initializer='he_normal')
         if options.fc_use_batch_norm[1]:
@@ -180,6 +182,8 @@ class SincNetModelFactory:
         if options.fc_use_layer_norm[1]:
             self.layer_norm_5 = layers.LayerNormalization(epsilon=1e-6)
         self.leaky_relu_5 = layers.LeakyReLU(alpha=0.2)
+        if options.fc_drop[1] > 1e-12:
+            self.fc_dropout_5 = layers.Dropout(options.fc_drop[1])
 
         self.dense_6 = layers.Dense(options.fc_size[2], kernel_initializer='he_normal')
         if options.fc_use_batch_norm[2]:
@@ -187,6 +191,8 @@ class SincNetModelFactory:
         if options.fc_use_layer_norm[2]:
             self.layer_norm_6 = layers.LayerNormalization(epsilon=1e-6)
         self.leaky_relu_6 = layers.LeakyReLU(alpha=0.2)
+        if options.fc_drop[2] > 1e-12:
+            self.fc_dropout_6 = layers.Dropout(options.fc_drop[2])
 
         self.head = CosFace(n_classes=options.n_classes)
 
@@ -226,6 +232,8 @@ class SincNetModelFactory:
         if self.options.fc_use_layer_norm[0]:
             x = self.layer_norm_4(x)
         x = self.leaky_relu_4(x)
+        if self.options.fc_drop[0] > 1e-12:
+            x = self.fc_dropout_4(x)
 
         x = self.dense_5(x)
         if self.options.fc_use_batch_norm[1]:
@@ -233,6 +241,8 @@ class SincNetModelFactory:
         if self.options.fc_use_layer_norm[1]:
             x = self.layer_norm_5(x)
         x = self.leaky_relu_5(x)
+        if self.options.fc_drop[1] > 1e-12:
+            x = self.fc_dropout_5(x)
 
         x = self.dense_6(x)
         if self.options.fc_use_batch_norm[2]:
@@ -240,6 +250,8 @@ class SincNetModelFactory:
         if self.options.fc_use_layer_norm[2]:
             x = self.layer_norm_6(x)
         x = self.leaky_relu_6(x)
+        if self.options.fc_drop[2] > 1e-12:
+            x = self.fc_dropout_6(x)
 
         prediction = self.head([x, labels])
 

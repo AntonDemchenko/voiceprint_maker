@@ -10,6 +10,7 @@ from tensorflow.keras.callbacks import TensorBoard
 
 import sincnet
 from config import read_config
+from data_loader import DataLoader
 
 
 def make_optimizer(cfg):

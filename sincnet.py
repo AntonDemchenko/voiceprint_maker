@@ -132,10 +132,7 @@ def sinc(band, t_right):
     return y
 
 
-def create_model(options):
-    inputs = L.Input(shape=options.input_shape)
-    labels = L.Input(shape=[options.n_classes,])
-
+def create_layers(options):
     layers = []
 
     for i in range(options.cnn_n_layers):
@@ -170,11 +167,35 @@ def create_model(options):
         layers.append(L.LeakyReLU(alpha=0.2))
         if options.fc_drop[i] > 1e-12:
             layers.append(L.Dropout(options.fc_drop[i]))
-    head = CosFace(n_classes=options.n_classes)
+    return layers
+
+
+def create_classifier(options):
+    inputs = L.Input(shape=options.input_shape)
+    labels = L.Input(shape=[options.n_classes,])
+
+    layers = create_layers(options)
 
     x = inputs
     for layer in layers:
         x = layer(x)
+
+    head = CosFace(n_classes=options.n_classes)
     prediction = head([x, labels])
 
     return tf.keras.Model(inputs=[inputs, labels], outputs=prediction)
+
+
+def create_print_maker(options):
+    inputs = L.Input(shape=options.input_shape)
+
+    layers = create_layers(options)
+
+    x = inputs
+    for layer in layers:
+        x = layer(x)
+
+    head = L.Lambda(lambda x: tf.math.l2_normalize(x))
+    prediction = head(x)
+
+    return tf.keras.Model(inputs=inputs, outputs=prediction)

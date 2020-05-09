@@ -8,9 +8,9 @@ from tensorflow.keras.callbacks import CSVLogger
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard
 
-import sincnet
 from config import read_config
 from data_loader import DataLoader
+from sincnet import create_classifier
 
 
 def make_optimizer(cfg):
@@ -27,7 +27,7 @@ def make_optimizer(cfg):
 
 
 def make_model(cfg):
-    model = sincnet.create_model(cfg)
+    model = create_classifier(cfg)
     if cfg.checkpoint_file != 'none':
         model.load_weights(cfg.checkpoint_file)
     optimizer = make_optimizer(cfg)

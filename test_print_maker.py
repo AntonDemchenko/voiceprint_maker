@@ -13,6 +13,11 @@ def make_window_predictions(model, dataset):
         prediction_batch = model.predict(signal_batch)
         paths.extend(path_batch)
         predictions.extend(prediction_batch)
+    norms = [np.linalg.norm(p) for p in predictions]
+    for i in range(len(norms)):
+        predictions[i] /= norms[i]
+    norms = [np.linalg.norm(p) for p in predictions]
+    print(min(norms), max(norms))
     return paths, predictions
 
 
@@ -38,13 +43,27 @@ def make_path_predictions(model, dataset):
 
 
 def distance(p1, p2):
-    return p1.dot(p2)
+    return -p1.dot(p2)
 
 
 def test(cfg, model, dataset):
     paths, predictions = make_path_predictions(model, dataset)
+    assert len(paths) == len(predictions)
+
+    norms = [np.linalg.norm(p) for p in predictions]
+    for i in range(len(norms)):
+        predictions[i] /= norms[i]
+    norms = [np.linalg.norm(p) for p in predictions]
+    print(min(norms), max(norms))
 
     labels = [cfg.path_to_label[path] for path in paths]
+    label_to_cnt = dict()
+    for l in labels:
+        if l not in label_to_cnt:
+            label_to_cnt[l] = 0
+        label_to_cnt[l] += 1
+    assert all(c == 2 for c in label_to_cnt.values())
+
     predicted_labels = []
     for i in range(len(predictions)):
         closest = None

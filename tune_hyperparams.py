@@ -8,10 +8,8 @@ from tensorflow.keras.callbacks import Callback
 
 from config import read_config
 from data_loader import DataLoader
-from sincnet import SincNetModelFactory
-from training import train
-from train_classifier import make_model
-from test_classifier import test
+from train import train
+from test import test
 
 
 BATCH = 'batch'
@@ -23,7 +21,7 @@ CNN_NORM = [BATCH, LAYER]
 CNN_DROP_RANGE = [0.0, 0.4]
 
 FC_NORM_BEFORE = [BATCH, LAYER, None]
-FC_N_LAYERS_RANGE = [1, 3]
+FC_N_LAYERS_RANGE = [1, 4]
 FC_SIZES = [128, 256, 512, 1024, 2048]
 FC_NORM = [BATCH, LAYER]
 FC_DROP_RANGE = [0.0, 0.4]
@@ -43,25 +41,25 @@ def get_random_options():
     fc_n_layers = random.randrange(*FC_N_LAYERS_RANGE)
 
     return {
-        'cnn_use_layer_norm_before': (cnn_norm_before == LAYER),
-        'cnn_use_batch_norm_before': (cnn_norm_before == BATCH),
-        'cnn_n_layers': CNN_N_LAYERS,
-        'cnn_use_layer_norm': [cnn_norm == LAYER] * CNN_N_LAYERS,
-        'cnn_use_batch_norm': [cnn_norm == BATCH] * CNN_N_LAYERS,
-        'cnn_act': [random.choice(ACTIVATIONS)] * CNN_N_LAYERS,
-        'cnn_drop': [random.uniform(*CNN_DROP_RANGE)] * CNN_N_LAYERS,
-        'fc_use_layer_norm_before': (fc_norm_before == LAYER),
-        'fc_use_batch_norm_before': (fc_norm_before == BATCH),
+        # 'cnn_use_layer_norm_before': (cnn_norm_before == LAYER),
+        # 'cnn_use_batch_norm_before': (cnn_norm_before == BATCH),
+        # 'cnn_n_layers': CNN_N_LAYERS,
+        # 'cnn_use_layer_norm': [cnn_norm == LAYER] * CNN_N_LAYERS,
+        # 'cnn_use_batch_norm': [cnn_norm == BATCH] * CNN_N_LAYERS,
+        # 'cnn_act': [random.choice(ACTIVATIONS)] * CNN_N_LAYERS,
+        # 'cnn_drop': [random.uniform(*CNN_DROP_RANGE)] * CNN_N_LAYERS,
+        # 'fc_use_layer_norm_before': (fc_norm_before == LAYER),
+        # 'fc_use_batch_norm_before': (fc_norm_before == BATCH),
         'fc_n_layers': fc_n_layers,
         'fc_size': [random.choice(FC_SIZES)] * fc_n_layers,
-        'fc_use_layer_norm': [fc_norm == LAYER] * fc_n_layers,
-        'fc_use_batch_norm': [fc_norm == BATCH] * fc_n_layers,
-        'fc_act': [random.choice(ACTIVATIONS)] * fc_n_layers,
+        # 'fc_use_layer_norm': [fc_norm == LAYER] * fc_n_layers,
+        # 'fc_use_batch_norm': [fc_norm == BATCH] * fc_n_layers,
+        # 'fc_act': [random.choice(ACTIVATIONS)] * fc_n_layers,
         'fc_drop': [random.uniform(*FC_DROP_RANGE)] * fc_n_layers,
-        'class_use_layer_norm_before': (class_norm_before == LAYER),
-        'class_use_batch_norm_before': (class_norm_before == BATCH),
+        # 'class_use_layer_norm_before': (class_norm_before == LAYER),
+        # 'class_use_batch_norm_before': (class_norm_before == BATCH),
         'lr': 10 ** random.uniform(*LOG10_LEARNING_RATE_RANGE),
-        'optimizer': random.choice(OPTIMIZERS)
+        # 'optimizer': random.choice(OPTIMIZERS)
     }
 
 
@@ -133,11 +131,8 @@ def do_tune_step(cfg, output_folder):
     cfg.__dict__.update(options)
     assert before == len(cfg.__dict__)
 
-    model = make_model(cfg)
-    data_loader = DataLoader(cfg)
-    callbacks = [make_early_stopping(cfg)]
-    history = train(cfg, model, data_loader, callbacks)
-
+    # callbacks = [make_early_stopping(cfg)]
+    history = train(cfg)
     # for layer in model.layers:
     #     layer.trainable = False
     # all_chunks_val_acc, sentence_val_acc = test(

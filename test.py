@@ -1,9 +1,9 @@
 import numpy as np
 from tqdm import tqdm
 
+import sincnet
 from config import read_config
 from data_loader import DataLoader
-from sincnet import SincNetModelFactory
 
 
 def test(cfg, model, data_loader, path_list):
@@ -36,7 +36,7 @@ def test(cfg, model, data_loader, path_list):
 
 def main():
     cfg = read_config()
-    model = SincNetModelFactory(cfg).create()
+    model = sincnet.create_model(cfg)
     model.load_weights(cfg.checkpoint_file)
     for layer in model.layers:
         layer.trainable = False

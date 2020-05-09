@@ -51,24 +51,16 @@ def distance(p1, p2):
     return 1 - p1.dot(p2)
 
 
-def test(cfg, model, dataset):
-    paths, predictions = make_path_predictions(model, dataset)
-    assert len(paths) == len(predictions)
+def calculate_accuracy(labels, predictions):
+    assert len(labels) == len(predictions)
 
-    labels = [cfg.path_to_label[path] for path in paths]
-    label_to_cnt = dict()
-    for l in labels:
-        if l not in label_to_cnt:
-            label_to_cnt[l] = 0
-        label_to_cnt[l] += 1
-    assert all(c == 2 for c in label_to_cnt.values())
-
+    indexes = list(range(len(predictions)))
     predicted_labels = []
-    for i in range(len(predictions)):
-        closest = None
-        for k in filter(lambda k: k != i, range(len(predictions))):
-            if closest is None or distance(predictions[i], predictions[k]) < distance(predictions[i], predictions[closest]):
-                closest = k
+    for i in tqdm(indexes):
+        closest = min(
+            indexes,
+            key=lambda k: distance(predictions[i], predictions[k]) if k != i else np.inf
+        )
         predicted_labels.append(labels[closest])
 
     correct_cnt = 0
@@ -77,6 +69,18 @@ def test(cfg, model, dataset):
             correct_cnt += 1
     accuracy = correct_cnt / len(labels)
     return accuracy
+
+
+def test(cfg, model, dataset):
+    paths, predictions = make_window_predictions(model, dataset)
+    labels = [cfg.path_to_label[path] for path in paths]
+    window_accuracy = calculate_accuracy(labels, predictions)
+
+    paths, predictions = make_path_predictions_from_window_predictions(paths, predictions)
+    labels = [cfg.path_to_label[path] for path in paths]
+    path_accuracy = calculate_accuracy(labels, predictions)
+
+    return window_accuracy, path_accuracy
 
 
 def main():

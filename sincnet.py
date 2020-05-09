@@ -195,8 +195,7 @@ def create_print_maker(options):
     for layer in layers:
         x = layer(x)
 
-    # head = L.Lambda(lambda x: tf.math.l2_normalize(x))
-    # prediction = head(x)
-    prediction = x
+    head = L.Lambda(lambda x: tf.math.l2_normalize(x, axis=1))
+    prediction = head(x)
 
     return tf.keras.Model(inputs=inputs, outputs=prediction)

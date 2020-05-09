@@ -1,9 +1,16 @@
 import numpy as np
+import tensorflow as tf
 from tqdm import tqdm
 
 from config import read_config
 from data_loader import DataLoader
 from sincnet import create_print_maker
+
+
+def check_norms(vectors):
+    norms = [np.linalg.norm(v) for v in vectors]
+    assert abs(1 - min(norms)) < 1e-6
+    assert abs(1 - max(norms)) < 1e-6
 
 
 def make_window_predictions(model, dataset):
@@ -13,11 +20,7 @@ def make_window_predictions(model, dataset):
         prediction_batch = model.predict(signal_batch)
         paths.extend(path_batch)
         predictions.extend(prediction_batch)
-    norms = [np.linalg.norm(p) for p in predictions]
-    for i in range(len(norms)):
-        predictions[i] /= norms[i]
-    norms = [np.linalg.norm(p) for p in predictions]
-    print(min(norms), max(norms))
+    check_norms(predictions)
     return paths, predictions
 
 
@@ -34,6 +37,8 @@ def make_path_predictions_from_window_predictions(paths, predictions):
         path_to_embedding[path] /= path_to_chunk_cnt[path]
     paths = [path for path, _ in path_to_embedding.items()]
     embeddings = [embedding for _, embedding in path_to_embedding.items()]
+    embeddings = tf.math.l2_normalize(embeddings, axis=1).numpy()
+    check_norms(embeddings)
     return paths, embeddings
 
 
@@ -43,18 +48,12 @@ def make_path_predictions(model, dataset):
 
 
 def distance(p1, p2):
-    return -p1.dot(p2)
+    return 1 - p1.dot(p2)
 
 
 def test(cfg, model, dataset):
     paths, predictions = make_path_predictions(model, dataset)
     assert len(paths) == len(predictions)
-
-    norms = [np.linalg.norm(p) for p in predictions]
-    for i in range(len(norms)):
-        predictions[i] /= norms[i]
-    norms = [np.linalg.norm(p) for p in predictions]
-    print(min(norms), max(norms))
 
     labels = [cfg.path_to_label[path] for path in paths]
     label_to_cnt = dict()
@@ -78,6 +77,7 @@ def test(cfg, model, dataset):
             correct_cnt += 1
     accuracy = correct_cnt / len(labels)
     return accuracy
+
 
 def main():
     cfg = read_config()

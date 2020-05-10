@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+from sklearn.neighbors import KDTree
 from tqdm import tqdm
 
 from config import read_config
@@ -13,72 +14,62 @@ def check_norms(vectors):
     assert abs(1 - max(norms)) < 1e-6
 
 
-def make_window_predictions(model, dataset):
+def make_window_voiceprints(model, dataset):
     paths = []
-    predictions = []
+    voiceprints = []
     for path_batch, signal_batch, _ in tqdm(dataset):
-        prediction_batch = model.predict(signal_batch)
+        voiceprint_batch = model.predict(signal_batch)
         paths.extend(path_batch)
-        predictions.extend(prediction_batch)
-    check_norms(predictions)
-    return paths, predictions
+        voiceprints.extend(voiceprint_batch)
+    check_norms(voiceprints)
+    return paths, voiceprints
 
 
-def make_path_predictions_from_window_predictions(paths, predictions):
-    path_to_embedding = dict()
+def make_path_voiceprints_from_window_voiceprints(paths, voiceprints):
+    path_to_voiceprint = dict()
     path_to_chunk_cnt = dict()
-    for path, prediction in zip(paths, predictions):
-        if path not in path_to_embedding:
+    for path, voiceprint in zip(paths, voiceprints):
+        if path not in path_to_voiceprint:
             path_to_chunk_cnt[path] = 0
-            path_to_embedding[path] = np.zeros(prediction.shape)
-        path_to_embedding[path] += prediction
+            path_to_voiceprint[path] = np.zeros(voiceprint.shape)
+        path_to_voiceprint[path] += voiceprint
         path_to_chunk_cnt[path] += 1
-    for path in path_to_embedding.keys():
-        path_to_embedding[path] /= path_to_chunk_cnt[path]
-    paths = [path for path, _ in path_to_embedding.items()]
-    embeddings = [embedding for _, embedding in path_to_embedding.items()]
-    embeddings = tf.math.l2_normalize(embeddings, axis=1).numpy()
-    check_norms(embeddings)
-    return paths, embeddings
+    for path in path_to_voiceprint.keys():
+        path_to_voiceprint[path] /= path_to_chunk_cnt[path]
+    paths = [path for path, _ in path_to_voiceprint.items()]
+    voiceprints = [voiceprint for _, voiceprint in path_to_voiceprint.items()]
+    voiceprints = tf.math.l2_normalize(voiceprints, axis=1).numpy()
+    check_norms(voiceprints)
+    return paths, voiceprints
 
 
-def make_path_predictions(model, dataset):
-    paths, predictions = make_window_predictions(model, dataset)
-    return make_path_predictions_from_window_predictions(paths, predictions)
+def identify(cfg, voiceprints):
+    voiceprints = np.array(voiceprints)
+    kdtree = KDTree(voiceprints)
+    closest_indexes = []
+    for p in tqdm(voiceprints):
+        closest = kdtree.query([p], k=2, return_distance=False, sort_results=True)[0][1]
+        closest_indexes.append(closest)
+    return closest_indexes
 
 
-def distance(p1, p2):
-    return 1 - p1.dot(p2)
-
-
-def calculate_accuracy(labels, predictions):
-    assert len(labels) == len(predictions)
-
-    indexes = list(range(len(predictions)))
-    predicted_labels = []
-    for i in tqdm(indexes):
-        closest = min(
-            indexes,
-            key=lambda k: distance(predictions[i], predictions[k]) if k != i else np.inf
-        )
-        predicted_labels.append(labels[closest])
-
-    correct_cnt = 0
-    for expected, predicted in zip(labels, predicted_labels):
-        if expected == predicted:
-            correct_cnt += 1
-    accuracy = correct_cnt / len(labels)
+def calculate_accuracy(cfg, paths, voiceprints):
+    assert len(paths) == len(voiceprints)
+    
+    labels = np.array([cfg.path_to_label[path] for path in paths])
+    closest_indexes = identify(cfg, voiceprints)
+    predicted_labels = np.array([labels[c] for c in closest_indexes])
+    accuracy = np.mean(labels == predicted_labels)
+    
     return accuracy
 
 
 def test(cfg, model, dataset):
-    paths, predictions = make_window_predictions(model, dataset)
-    labels = [cfg.path_to_label[path] for path in paths]
-    window_accuracy = calculate_accuracy(labels, predictions)
+    paths, voiceprints = make_window_voiceprints(model, dataset)
+    window_accuracy = calculate_accuracy(cfg, paths, voiceprints)
 
-    paths, predictions = make_path_predictions_from_window_predictions(paths, predictions)
-    labels = [cfg.path_to_label[path] for path in paths]
-    path_accuracy = calculate_accuracy(labels, predictions)
+    paths, voiceprints = make_path_voiceprints_from_window_voiceprints(paths, voiceprints)
+    path_accuracy = calculate_accuracy(cfg, paths, voiceprints)
 
     return window_accuracy, path_accuracy
 

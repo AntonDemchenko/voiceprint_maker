@@ -48,7 +48,7 @@ class DataLoader:
             for path in path_list:
                 signal = self.read_signal(path)
                 label = self.transform_path_to_label(path)
-                for chunk in self.make_test_chunks(signal):
+                for chunk in self.split_to_windows(signal):
                     yield path, chunk, label
         path_batch = []
         signal_batch = []
@@ -89,10 +89,10 @@ class DataLoader:
         for path in path_list:
             signal = self.read_signal(path)
             label = self.transform_path_to_label(path)
-            for chunk in self.make_test_chunks(signal):
+            for chunk in self.split_to_windows(signal):
                 yield ((chunk, label), label)
 
-    def make_test_chunks(self, signal):
+    def split_to_windows(self, signal):
         for chunk_begin in range(0, signal.shape[0] - self.cfg.window_len + 1, self.cfg.window_shift):
             chunk = signal[chunk_begin : chunk_begin + self.cfg.window_len]
             yield chunk
@@ -102,7 +102,9 @@ class DataLoader:
         return self.decode_wav(wav)
 
     def read_wav(self, path):
-        full_path = tf.strings.join([self.cfg.dataset_folder, path], separator='/')
+        full_path = tf.strings.join([self.cfg.dataset_folder, path], separator='/')\
+            if self.cfg.dataset_folder\
+            else path
         return tf.io.read_file(full_path)
 
     def decode_wav(self, wav):

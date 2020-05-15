@@ -1,4 +1,3 @@
-import time
 import sys
 
 import tensorflow as tf
@@ -40,11 +39,9 @@ def main():
         layer.trainable = False
 
     for file_name in map(str.strip, sys.stdin):
-        start = time.time()
         voiceprint = make_voiceprint(model, data_loader, file_name)
-        print(time.time() - start, 'sec')
-        # output = ' '.join(map(str, voiceprint))
-        # print(output)
+        output = ' '.join(map(str, voiceprint))
+        print(output)
 
 
 if __name__ == '__main__':

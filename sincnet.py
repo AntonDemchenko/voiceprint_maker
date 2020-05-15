@@ -181,6 +181,13 @@ class CosFace(L.Layer):
         return config
 
 
+def get_activation(act):
+    if act == 'relu':
+        return L.ReLU()
+    elif act == 'leaky_relu':
+        return L.LeakyReLU(alpha=0.2)
+
+
 def create_layers(options):
     layers = []
 
@@ -203,7 +210,7 @@ def create_layers(options):
             layers.append(L.BatchNormalization(momentum=0.95, epsilon=1e-5))
         if options.cnn_use_layer_norm[i]:
             layers.append(L.LayerNormalization(epsilon=1e-6))
-        layers.append(L.LeakyReLU(alpha=0.2))
+        layers.append(get_activation(options.cnn_act[i]))
         if options.cnn_drop[i] > 1e-12:
             layers.append(L.Dropout(options.cnn_drop[i]))
     layers.append(L.Flatten())
@@ -213,7 +220,7 @@ def create_layers(options):
             layers.append(L.BatchNormalization(momentum=0.95, epsilon=1e-5))
         if options.fc_use_layer_norm[i]:
             layers.append(L.LayerNormalization(epsilon=1e-6))
-        layers.append(L.LeakyReLU(alpha=0.2))
+        layers.append(get_activation(options.fc_act[i]))
         if options.fc_drop[i] > 1e-12:
             layers.append(L.Dropout(options.fc_drop[i]))
     return layers

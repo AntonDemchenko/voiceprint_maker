@@ -35,6 +35,7 @@ def main():
     cfg = read_config()
     data_loader = DataLoader(cfg)
     model = create_print_maker(cfg)
+    model.load_weights(cfg.checkpoint_file, by_name=True, skip_mismatch=True)
     for layer in model.layers:
         layer.trainable = False
 

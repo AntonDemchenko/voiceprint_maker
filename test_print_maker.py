@@ -14,17 +14,6 @@ def check_norms(vectors):
     assert abs(1 - max(norms)) < 1e-6
 
 
-def make_window_voiceprints(model, dataset):
-    paths = []
-    voiceprints = []
-    for path_batch, signal_batch, _ in tqdm(dataset):
-        voiceprint_batch = model.predict(signal_batch)
-        paths.extend(path_batch)
-        voiceprints.extend(voiceprint_batch)
-    check_norms(voiceprints)
-    return paths, voiceprints
-
-
 def unite_equally_labeled_voiceprints(labels, voiceprints):
     label_to_voiceprints = dict()
     for l, v in zip(labels, voiceprints):
@@ -39,8 +28,24 @@ def unite_equally_labeled_voiceprints(labels, voiceprints):
 
 
 def make_path_voiceprints(model, dataset):
-    paths, voiceprints = make_window_voiceprints(model, dataset)
-    paths, voiceprints = unite_equally_labeled_voiceprints(paths, voiceprints)
+    path_to_voiceprint_sum = dict()
+    path_to_voiceprint_count = dict()
+    for path_batch, signal_batch, _ in tqdm(dataset):
+        voiceprint_batch = model.predict(signal_batch)
+        for p, v in zip(path_batch, voiceprint_batch):
+            if p not in path_to_voiceprint_sum:
+                path_to_voiceprint_sum[p] = np.zeros(v.shape)
+                path_to_voiceprint_count[p] = 0
+            path_to_voiceprint_sum[p] += v
+            path_to_voiceprint_count[p] += 1
+    paths = []
+    voiceprints = []
+    for path in path_to_voiceprint_sum:
+        paths.append(path)
+        v = path_to_voiceprint_sum[path] / path_to_voiceprint_count[path]
+        voiceprints.append(v)
+    voiceprints = tf.math.l2_normalize(voiceprints, axis=1).numpy()
+    check_norms(voiceprints)
     return paths, voiceprints
 
 
@@ -59,7 +64,7 @@ def calculate_accuracy(base_labels, base_voiceprints, test_labels, test_voicepri
     closest_indexes = find_closest(base_voiceprints, test_voiceprints)
     predicted_labels = np.array([base_labels[c] for c in closest_indexes])
     accuracy = np.mean(np.array([test_labels]) == predicted_labels)
-    
+
     return accuracy
 
 

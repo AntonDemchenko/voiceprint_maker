@@ -103,6 +103,9 @@ class SincNetCfg:
         self.use_tensorboard_logger = config.getboolean('callbacks', 'use_tensorboard_logger')
         self.save_checkpoints = config.getboolean('callbacks', 'save_checkpoints')
 
+        # [testing]
+        self.max_top = config.getint('testing', 'max_top')
+
         self.checkpoint_folder = os.path.join(self.output_folder, 'checkpoints')
         self.best_checkpoint_path = os.path.join(self.checkpoint_folder, 'best_checkpoint.hdf5')
         self.last_checkpoint_path = os.path.join(self.checkpoint_folder, 'last_checkpoint.hdf5')

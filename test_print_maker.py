@@ -49,23 +49,23 @@ def make_path_voiceprints(model, dataset):
     return paths, voiceprints
 
 
-def find_closest(base_points, query_points):
-    base_points = np.array(base_points)
-    kdtree = KDTree(base_points)
-    closest = kdtree.query(query_points, k=1, return_distance=False, sort_results=True)
-    closest = list(map(lambda c: c[0], closest))
-    return closest
-
-
-def calculate_accuracy(base_labels, base_voiceprints, test_labels, test_voiceprints):
+def calculate_accuracies(base_labels, base_voiceprints, test_labels, test_voiceprints, max_top):
     assert len(base_labels) == len(base_voiceprints)
     assert len(test_labels) == len(test_voiceprints)
 
-    closest_indexes = find_closest(base_voiceprints, test_voiceprints)
-    predicted_labels = np.array([base_labels[c] for c in closest_indexes])
-    accuracy = np.mean(np.array([test_labels]) == predicted_labels)
+    base_labels = np.array(base_labels)
+    test_labels = np.array(test_labels)
+    base_voiceprints = np.array(base_voiceprints)
+    kdtree = KDTree(base_voiceprints)
+    top_to_accuracy = dict()
 
-    return accuracy
+    for top in tqdm(range(1, max_top + 1)):
+        closest_indexes = kdtree.query(test_voiceprints, k=top, return_distance=False, sort_results=True)
+        predicted_labels = np.array([base_labels[c] for c in closest_indexes])
+        accuracy = np.mean([test in predicted for test, predicted in zip(test_labels, predicted_labels)])
+        top_to_accuracy[top] = accuracy
+
+    return top_to_accuracy
 
 
 def test(cfg, model, train_dataset, test_dataset):
@@ -74,8 +74,14 @@ def test(cfg, model, train_dataset, test_dataset):
     base_labels, base_voiceprints = unite_equally_labeled_voiceprints(labels, voiceprints)
     paths, test_voiceprints = make_path_voiceprints(model, test_dataset)
     test_labels = [cfg.path_to_label[p] for p in paths]
-    accuracy = calculate_accuracy(base_labels, base_voiceprints, test_labels, test_voiceprints)
-    return accuracy
+    top_to_accuracy = calculate_accuracies(
+        base_labels,
+        base_voiceprints,
+        test_labels,
+        test_voiceprints,
+        cfg.max_top
+    )
+    return top_to_accuracy
 
 
 def main():
@@ -88,8 +94,9 @@ def main():
     data_loader = DataLoader(cfg)
     train_dataset = data_loader.make_test_iterable(cfg.train_list)
     test_dataset = data_loader.make_test_iterable(cfg.test_list)
-    accuracy = test(cfg, model, train_dataset, test_dataset)
-    print(accuracy)
+    top_to_accuracy = test(cfg, model, train_dataset, test_dataset)
+    for top, acc in sorted(top_to_accuracy.items()):
+        print(top, acc)
 
 
 if __name__ == '__main__':

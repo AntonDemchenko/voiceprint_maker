@@ -32,7 +32,7 @@ def unite_equally_labeled_voiceprints(labels, voiceprints):
             label_to_voiceprints[l] = []
         label_to_voiceprints[l].append(v)
     labels = list(l for l, _ in label_to_voiceprints.items())
-    voiceprints = list(np.mean(vs) for _, vs in label_to_voiceprints.items())
+    voiceprints = list(np.mean(vs, axis=0) for _, vs in label_to_voiceprints.items())
     voiceprints = tf.math.l2_normalize(voiceprints, axis=1).numpy()
     check_norms(voiceprints)
     return labels, voiceprints
@@ -47,7 +47,6 @@ def make_path_voiceprints(model, dataset):
 def find_closest(base_points, query_points):
     base_points = np.array(base_points)
     kdtree = KDTree(base_points)
-    closest_indexes = []
     closest = kdtree.query(query_points, k=1, return_distance=False, sort_results=True)
     closest = list(map(lambda c: c[0], closest))
     return closest
@@ -59,7 +58,7 @@ def calculate_accuracy(base_labels, base_voiceprints, test_labels, test_voicepri
 
     closest_indexes = find_closest(base_voiceprints, test_voiceprints)
     predicted_labels = np.array([base_labels[c] for c in closest_indexes])
-    accuracy = np.mean(test_labels == predicted_labels)
+    accuracy = np.mean(np.array([test_labels]) == predicted_labels)
     
     return accuracy
 
@@ -68,7 +67,8 @@ def test(cfg, model, train_dataset, test_dataset):
     paths, voiceprints = make_path_voiceprints(model, train_dataset)
     labels = [cfg.path_to_label[p] for p in paths]
     base_labels, base_voiceprints = unite_equally_labeled_voiceprints(labels, voiceprints)
-    test_labels, test_voiceprints = make_path_voiceprints(model, test_dataset)
+    paths, test_voiceprints = make_path_voiceprints(model, test_dataset)
+    test_labels = [cfg.path_to_label[p] for p in paths]
     accuracy = calculate_accuracy(base_labels, base_voiceprints, test_labels, test_voiceprints)
     return accuracy
 

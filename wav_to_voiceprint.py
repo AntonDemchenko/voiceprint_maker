@@ -1,3 +1,4 @@
+import os
 import sys
 
 import tensorflow as tf
@@ -40,6 +41,7 @@ def main():
         layer.trainable = False
 
     for file_name in map(str.strip, sys.stdin):
+        file_name = os.path.relpath(file_name)
         voiceprint = make_voiceprint(model, data_loader, file_name)
         output = ' '.join(map(str, voiceprint))
         print(output)

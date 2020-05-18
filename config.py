@@ -51,7 +51,9 @@ class SincNetCfg:
         self.test_list_file = os.path.join(base_path, config.get('data', 'test_list_file'))
         self.val_list_file = os.path.join(base_path, config.get('data', 'val_list_file'))
         self.path_to_label_file = os.path.join(base_path, config.get('data', 'path_to_label_file'))
-        self.dataset_folder = os.path.join(base_path, config.get('data', 'dataset_folder'))
+        self.dataset_folder = config.get('data', 'dataset_folder', fallback=None)
+        if self.dataset_folder is not None:
+            self.dataset_folder = os.path.join(base_path, self.dataset_folder)
         self.output_folder = os.path.join(base_path, config.get('data', 'output_folder'))
         self.checkpoint_file = os.path.join(base_path, config.get('data', 'checkpoint_file'))
 

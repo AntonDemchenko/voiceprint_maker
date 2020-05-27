@@ -55,7 +55,9 @@ class SincNetCfg:
         if self.dataset_folder is not None:
             self.dataset_folder = os.path.join(base_path, self.dataset_folder)
         self.output_folder = os.path.join(base_path, config.get('data', 'output_folder'))
-        self.checkpoint_file = os.path.join(base_path, config.get('data', 'checkpoint_file'))
+        self.checkpoint_file = config.get('data', 'checkpoint_file', fallback=None)
+        if self.checkpoint_file:        
+            self.checkpoint_file = os.path.join(base_path, self.checkpoint_file)
 
         # [windowing]
         self.sample_rate = config.getint('windowing', 'sample_rate')
@@ -141,10 +143,7 @@ class SincNetCfg:
     def _get_initial_epoch(self):
         result = 0
         log_path = os.path.join(self.output_folder, 'log.csv')
-        match = re.compile(r'SincNet-(\d+)\.hdf5$').search(self.checkpoint_file)
-        if match:
-            result = int(match.group(1))
-        elif self.checkpoint_file != 'none' and os.path.exists(log_path):
+        if self.checkpoint_file and os.path.exists(log_path):
             s = ''
             with open(log_path, 'r') as f:
                 for line in f:

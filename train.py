@@ -28,7 +28,7 @@ def make_optimizer(cfg):
 
 def make_model(cfg):
     model = create_classifier(cfg)
-    if cfg.checkpoint_file != 'none':
+    if cfg.checkpoint_file:
         model.load_weights(cfg.checkpoint_file)
     optimizer = make_optimizer(cfg)
     model.compile(

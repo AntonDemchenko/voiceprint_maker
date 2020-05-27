@@ -2,8 +2,8 @@ import numpy as np
 from tqdm import tqdm
 
 from config import read_config
-from data_loader import ClassifierDataLoader
-from sincnet import SincNetClassifierFactory
+from data_loader import DataLoader
+from sincnet import create_classifier
 
 
 def test(cfg, model, data_loader, path_list):
@@ -11,9 +11,9 @@ def test(cfg, model, data_loader, path_list):
     path_to_prediction_sum = dict()
     samples_count = 0
     error_count = 0
-    for path_batch, signal_batch in tqdm(dataset):
+    for path_batch, signal_batch, label_batch in tqdm(dataset):
         samples_count += len(path_batch)
-        prediction_batch = model.predict(signal_batch)
+        prediction_batch = model.predict([signal_batch, label_batch])
         for path, prediction in zip(path_batch, prediction_batch):
             if path not in path_to_prediction_sum:
                 path_to_prediction_sum[path] = np.zeros([cfg.n_classes])
@@ -36,11 +36,11 @@ def test(cfg, model, data_loader, path_list):
 
 def main():
     cfg = read_config()
-    model = SincNetClassifierFactory(cfg).create()
+    model = create_classifier(cfg)
     model.load_weights(cfg.checkpoint_file)
     for layer in model.layers:
         layer.trainable = False
-    data_loader = ClassifierDataLoader(cfg)
+    data_loader = DataLoader(cfg)
     accuracy = test(cfg, model, data_loader, cfg.test_list)
     print(accuracy)
 

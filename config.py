@@ -44,14 +44,20 @@ class SincNetCfg:
         config = SincNetConfigParser()
         config.read(cfg_file)
 
+        base_path = os.path.dirname(os.path.realpath(__file__))
+
         # [data]
-        self.train_list_file = config.get('data', 'train_list_file')
-        self.test_list_file = config.get('data', 'test_list_file')
-        self.val_list_file = config.get('data', 'val_list_file')
-        self.path_to_label_file = config.get('data', 'path_to_label_file')
-        self.dataset_folder = config.get('data', 'dataset_folder')
-        self.output_folder = config.get('data', 'output_folder')
-        self.checkpoint_file = config.get('data', 'checkpoint_file')
+        self.train_list_file = os.path.join(base_path, config.get('data', 'train_list_file'))
+        self.test_list_file = os.path.join(base_path, config.get('data', 'test_list_file'))
+        self.val_list_file = os.path.join(base_path, config.get('data', 'val_list_file'))
+        self.path_to_label_file = os.path.join(base_path, config.get('data', 'path_to_label_file'))
+        self.dataset_folder = config.get('data', 'dataset_folder', fallback=None)
+        if self.dataset_folder is not None:
+            self.dataset_folder = os.path.join(base_path, self.dataset_folder)
+        self.output_folder = os.path.join(base_path, config.get('data', 'output_folder'))
+        self.checkpoint_file = config.get('data', 'checkpoint_file', fallback=None)
+        if self.checkpoint_file:        
+            self.checkpoint_file = os.path.join(base_path, self.checkpoint_file)
 
         # [windowing]
         self.sample_rate = config.getint('windowing', 'sample_rate')
@@ -103,7 +109,10 @@ class SincNetCfg:
         self.use_tensorboard_logger = config.getboolean('callbacks', 'use_tensorboard_logger')
         self.save_checkpoints = config.getboolean('callbacks', 'save_checkpoints')
 
-        self.checkpoint_folder = os.path.join(self.output_folder, 'checkpoints')
+        # [testing]
+        self.max_top = config.getint('testing', 'max_top')
+
+        self.checkpoint_folder = os.path.join(base_path, os.path.join(self.output_folder, 'checkpoints'))
         self.best_checkpoint_path = os.path.join(self.checkpoint_folder, 'best_checkpoint.hdf5')
         self.last_checkpoint_path = os.path.join(self.checkpoint_folder, 'last_checkpoint.hdf5')
 
@@ -134,10 +143,7 @@ class SincNetCfg:
     def _get_initial_epoch(self):
         result = 0
         log_path = os.path.join(self.output_folder, 'log.csv')
-        match = re.compile(r'SincNet-(\d+)\.hdf5$').search(self.checkpoint_file)
-        if match:
-            result = int(match.group(1))
-        elif self.checkpoint_file != 'none' and os.path.exists(log_path):
+        if self.checkpoint_file and os.path.exists(log_path):
             s = ''
             with open(log_path, 'r') as f:
                 for line in f:

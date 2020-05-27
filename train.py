@@ -8,6 +8,10 @@ from tensorflow.keras.callbacks import CSVLogger
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard
 
+from config import read_config
+from data_loader import DataLoader
+from sincnet import create_classifier
+
 
 def make_optimizer(cfg):
     from tensorflow.keras import optimizers
@@ -20,6 +24,19 @@ def make_optimizer(cfg):
         return optimizers.Adagrad(learning_rate=cfg.lr)
     if cfg.optimizer == 'sgd':
         return optimizers.SGD(learning_rate=cfg.lr)
+
+
+def make_model(cfg):
+    model = create_classifier(cfg)
+    if cfg.checkpoint_file:
+        model.load_weights(cfg.checkpoint_file)
+    optimizer = make_optimizer(cfg)
+    model.compile(
+        loss='categorical_crossentropy',
+        optimizer=optimizer,
+        metrics=['accuracy']
+    )
+    return model
 
 
 def initialize_session(cfg):
@@ -72,8 +89,10 @@ def make_callbacks(cfg):
     return callbacks
 
 
-def train(cfg, model, data_loader, callbacks=[]):
+def train(cfg, callbacks=[]):
     initialize_session(cfg)
+    model = make_model(cfg)
+    data_loader = DataLoader(cfg)
     callbacks.extend(make_callbacks(cfg))
 
     train_dataset = data_loader.make_train_dataset(cfg.train_list)
@@ -89,3 +108,12 @@ def train(cfg, model, data_loader, callbacks=[]):
         validation_freq=cfg.val_freq
     )
     return result
+
+
+def main():
+    cfg = read_config()
+    train(cfg)
+
+
+if __name__ == '__main__':
+    main()

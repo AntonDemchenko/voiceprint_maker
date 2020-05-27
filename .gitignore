@@ -1,4 +1,6 @@
 venv/
 .idea/
-/venv
-/.idea
+__pycache__/
+output/
+tuning_results/
+.vscode/

@@ -9,7 +9,7 @@ Voiceprint maker with SincNet architecture and CosFace head implemented using Te
 6. Test: ```python test_print_maker --cfg=<your configuration file path>```.
 7. Make voiceprints: ```python wav_to_voiceprint.py --cfg=<your configuration file path>```.
 
-If you work with TIMIT dataset then you can skip 1-4 steps and use cfg/SincNet_TIMIT.cfg as configuration file.
+If you work with TIMIT dataset then you can skip 2-4 steps and use cfg/SincNet_TIMIT.cfg as configuration file.
 
 ## References
 [1] SincNet original code written in PyTorch by the autor (https://github.com/mravanelli/SincNet)
